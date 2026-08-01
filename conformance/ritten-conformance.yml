@@ -1,0 +1,19 @@
+generated: '2026-07-21'
+method: searched
+source: https://www.ritten.io/
+note: Ritten publishes no public API/OpenAPI; standards below are assessed from published
+  compliance posture on the marketing site, not from a spec.
+standards:
+- id: hipaa
+  conforms: true
+  evidence: 'Site states "Ritten is built for HIPAA-regulated care and behavioral health
+    confidentiality needs" with role-based access controls and audit logs.'
+- id: 42-cfr-part-2
+  conforms: true
+  evidence: Site explicitly cites 42 CFR Part 2 (substance-use confidentiality) support.
+- id: oauth2
+  conforms: false
+  evidence: No public OAuth2 authorization surface documented.
+- id: fhir-r4
+  conforms: false
+  evidence: No public FHIR API documented.
