@@ -39,7 +39,7 @@ x-backed-by:
 - threshold-ventures
 x-tier: enriched
 x-tier-reason: public OpenAPI 3.1.0 harvested from docs.ritten.io
-specificationVersion: '0.20'
+specificationVersion: '0.23'
 created: '2026-07-17'
 modified: '2026-08-15'
 tags:
