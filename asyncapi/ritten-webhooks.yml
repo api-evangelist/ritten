@@ -1,0 +1,74 @@
+generated: '2026-08-15'
+method: derived
+source: openapi/ritten-external-api-openapi.yaml
+spec_type: OpenAPI 3.1 webhooks
+note: Ritten publishes no AsyncAPI document. It DOES declare a real event surface in the OpenAPI 3.1 `webhooks`
+  block, captured here verbatim from that block. Partners subscribe via Ritten provisioning; there is
+  no self-service webhook-subscription endpoint in the public API.
+delivery:
+  transport: https
+  method: POST
+  content_type: application/json
+  envelope:
+    type: string — the event type
+    data: object — shape varies by event type
+  example:
+    type: patient.admit
+    data:
+      patientId: 182c2e54-3494-4b85-aba5-038cf539d5bf
+      programId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+  signature: null
+  signature_note: No webhook signing/verification scheme is documented in the spec or docs.
+  retries: null
+  retries_note: No retry or redelivery policy is documented.
+subscription:
+  self_service: false
+  note: Integrating partners are subscribed to events by Ritten as part of integration provisioning.
+event_count: 6
+events:
+- event: patient.admit
+  description: A patient has been admitted to a clinic program
+  method: POST
+  payload_fields:
+  - patientId
+  - programId
+  ack: HTTP 200 indicates the payload was received successfully
+- event: patient.transfer
+  description: A patient has been transferred from one program to another
+  method: POST
+  payload_fields:
+  - fromProgramId
+  - patientId
+  - toProgramId
+  ack: HTTP 200 indicates the payload was received successfully
+- event: patient.discharge
+  description: A patient has been discharged from a clinic program
+  method: POST
+  payload_fields:
+  - patientId
+  - programId
+  ack: HTTP 200 indicates the payload was received successfully
+- event: case.status.update
+  description: The status of a case has been updated
+  method: POST
+  payload_fields:
+  - caseId
+  - fromStatus
+  - personSeekingTreatmentId
+  - toStatus
+  ack: HTTP 200 indicates the payload was received successfully
+- event: case.created
+  description: A new case has been created
+  method: POST
+  payload_fields:
+  - caseId
+  - personSeekingTreatmentId
+  - status
+  ack: HTTP 200 indicates the payload was received successfully
+- event: patient.created
+  description: A new patient has been created (MRN generated)
+  method: POST
+  payload_fields:
+  - mrn
+  - patientId
+  ack: HTTP 200 indicates the payload was received successfully

@@ -1,0 +1,63 @@
+generated: '2026-08-15'
+method: derived
+source: openapi/ritten-external-api-openapi.yaml
+status: candidate
+note: No Ritten MCP server exists. Probed mcp.ritten.io (DNS wildcard -> Webflow marketing homepage),
+  api.ritten.io/mcp (404) and docs.ritten.io/mcp (404) on 2026-08-15. The tools below are a DERIVED candidate
+  surface from the published OpenAPI, not a shipped product.
+deployment:
+  mode: none
+  endpoint: null
+  install: null
+  package: null
+  auth: oauth
+  verified: probed
+server:
+  name: ritten
+  transport: null
+  url: null
+candidate_auth:
+  model: OAuth 2.0 client_credentials + X-Ritten-Tenant header
+  note: Any MCP server would need per-tenant credential binding; tenancy is a request header, not a token
+    claim.
+phi_warning: This API returns Protected Health Information under HIPAA and 42 CFR Part 2. An MCP server
+  over these operations would expose PHI to an LLM context and requires a BAA plus 42 CFR Part 2 consent
+  handling. Recorded as a governance note, not a recommendation.
+tool_count: 12
+tools:
+- name: list_patients
+  description: List patients for a clinic tenant
+  source_operation: openapi/ritten-external-api-openapi.yaml#listPatients
+- name: get_patient
+  description: Get a patient by Ritten id
+  source_operation: openapi/ritten-external-api-openapi.yaml#getPatientById
+- name: get_patient_by_external_id
+  description: Resolve a patient by partner-assigned external id
+  source_operation: openapi/ritten-external-api-openapi.yaml#getPatientByExternalId
+- name: list_cases
+  description: List CRM admissions-pipeline cases
+  source_operation: openapi/ritten-external-api-openapi.yaml#listCases
+- name: get_case
+  description: Get a case by id
+  source_operation: openapi/ritten-external-api-openapi.yaml#getCase
+- name: list_programs
+  description: List clinic programs
+  source_operation: openapi/ritten-external-api-openapi.yaml#listPrograms
+- name: list_facilities
+  description: List clinic facilities (service locations)
+  source_operation: openapi/ritten-external-api-openapi.yaml#listFacilities
+- name: list_tasks
+  description: List clinic tasks
+  source_operation: openapi/ritten-external-api-openapi.yaml#listTasks
+- name: list_insurance_payers
+  description: List insurance payers
+  source_operation: openapi/ritten-external-api-openapi.yaml#listInsurancePayers
+- name: get_census_report
+  description: Get the clinic census report
+  source_operation: openapi/ritten-external-api-openapi.yaml#getCensusReport
+- name: get_admissions_report
+  description: Get the admissions report for a date range
+  source_operation: openapi/ritten-external-api-openapi.yaml#getAdmissionsReport
+- name: get_discharges_report
+  description: Get the discharges report for a date range
+  source_operation: openapi/ritten-external-api-openapi.yaml#getDischargesReport

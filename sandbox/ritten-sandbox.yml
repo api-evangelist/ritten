@@ -1,0 +1,27 @@
+generated: '2026-08-15'
+method: searched
+source: https://docs.ritten.io/swagger/openapi.yaml
+docs: https://docs.ritten.io/
+note: Ritten documents a non-production "beta" environment with its own API host and OAuth audience. No
+  public self-service sandbox, no test credentials, and no magic/test data values are published — beta
+  access is provisioned by Ritten per partner.
+self_service: false
+environments:
+- name: production
+  base_url: https://api.ritten.io/v1
+  token_url: https://api.ritten.io/v1/oauth/token
+  audience: https://external-api.ritten.io
+- name: beta
+  base_url: https://api.beta.ritten.io/v1
+  token_url: https://api.beta.ritten.io/v1/oauth/token
+  audience: https://external-api.beta.ritten.io
+separation:
+  mechanism: separate hostname + separate OAuth audience per environment
+  key_prefixes: null
+  key_prefix_note: No test-vs-live credential prefix convention is documented.
+test_values: []
+test_values_note: No test patients, magic identifiers, fixture tooling, or time-simulation features are
+  published.
+quote: When working in non-production environments, the API endpoints (and `audience` value) will be different.
+  For example, in the `beta` environment, the token endpoint is https://api.beta.ritten.io/v1/oauth/token
+  and the audience is https://external-api.beta.ritten.io

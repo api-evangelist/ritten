@@ -1,0 +1,17 @@
+generated: '2026-08-15'
+method: searched
+source: https://www.ritten.io/
+note: 'Ritten publishes NO public pricing. https://www.ritten.io/pricing returns 404 (probed 2026-08-15).
+  The site FAQ states pricing is quoted per customer: "Ritten typically reviews your number of programs,
+  levels of care, users, and billing complexity to propose an appropriate subscription and onboarding
+  plan." API access is likewise not sold self-service — integration credentials are provisioned by Ritten
+  to partners.'
+pricing_model: enterprise-quote
+self_service: false
+plan_count: 0
+plans: []
+evidence:
+- url: https://www.ritten.io/pricing
+  status: 404
+- url: https://www.ritten.io/
+  status: 200

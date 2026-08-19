@@ -1,18 +1,134 @@
-generated: '2026-07-21'
+generated: '2026-08-15'
 method: searched
-source: live probes of /.well-known/* on Ritten hosts
-note: No /.well-known/ discovery documents are published. Absence is recorded data, not fabrication.
+source: live probes of /.well-known/* on all Ritten hosts (2026-08-15)
+note: No /.well-known/ discovery documents are published on ANY Ritten host, including the API host api.ritten.io
+  and the docs host docs.ritten.io. Every path 404s. Absence is recorded data; no WellKnown or SecurityTxt
+  pointer is emitted.
 hosts:
 - https://ritten.io
-- https://secure.ritten.io
+- https://www.ritten.io
+- https://docs.ritten.io
 - https://api.ritten.io
+- https://secure.ritten.io
+hit_count: 0
 documents:
-- {host: 'https://ritten.io', path: /.well-known/security.txt, status: 404}
-- {host: 'https://ritten.io', path: /.well-known/openid-configuration, status: 404}
-- {host: 'https://ritten.io', path: /.well-known/oauth-authorization-server, status: 404}
-- {host: 'https://ritten.io', path: /.well-known/api-catalog, status: 404}
-- {host: 'https://ritten.io', path: /.well-known/ai-plugin.json, status: 404}
-- {host: 'https://secure.ritten.io', path: /.well-known/security.txt, status: 404}
-- {host: 'https://secure.ritten.io', path: /.well-known/openid-configuration, status: 404}
-- {host: 'https://api.ritten.io', path: /.well-known/security.txt, status: 404}
-- {host: 'https://api.ritten.io', path: /.well-known/openid-configuration, status: 404}
+- host: https://ritten.io
+  path: /.well-known/security.txt
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/openid-configuration
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/oauth-authorization-server
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/oauth-protected-resource
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/api-catalog
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/ai-plugin.json
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/agent-card.json
+  status: 404
+- host: https://ritten.io
+  path: /.well-known/agent.json
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/security.txt
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/openid-configuration
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/oauth-authorization-server
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/oauth-protected-resource
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/api-catalog
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/ai-plugin.json
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/agent-card.json
+  status: 404
+- host: https://www.ritten.io
+  path: /.well-known/agent.json
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/security.txt
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/openid-configuration
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/oauth-authorization-server
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/oauth-protected-resource
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/api-catalog
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/ai-plugin.json
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/agent-card.json
+  status: 404
+- host: https://docs.ritten.io
+  path: /.well-known/agent.json
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/security.txt
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/openid-configuration
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/oauth-authorization-server
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/oauth-protected-resource
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/api-catalog
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/ai-plugin.json
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/agent-card.json
+  status: 404
+- host: https://api.ritten.io
+  path: /.well-known/agent.json
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/security.txt
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/openid-configuration
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/oauth-authorization-server
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/oauth-protected-resource
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/api-catalog
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/ai-plugin.json
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/agent-card.json
+  status: 404
+- host: https://secure.ritten.io
+  path: /.well-known/agent.json
+  status: 404

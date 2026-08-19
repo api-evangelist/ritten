@@ -1,0 +1,47 @@
+generated: '2026-08-15'
+method: searched
+source: https://docs.ritten.io/swagger/openapi.yaml
+docs: https://docs.ritten.io/
+versioning:
+  scheme: uri-path
+  current: v1
+  base_url: https://api.ritten.io/v1
+  spec_version: 1.0.0
+  docs: https://docs.ritten.io/
+environments:
+- name: production
+  base_url: https://api.ritten.io/v1
+- name: beta
+  base_url: https://api.beta.ritten.io/v1
+  note: Non-production environment documented in the spec; endpoints and OAuth audience differ.
+deprecation:
+  policy_url: null
+  sunset_header: false
+  note: No deprecation policy, no RFC 8594 Sunset/Deprecation header support, and no deprecated operations
+    are documented or flagged in the spec.
+deprecated_operations: []
+change_notification:
+  note: 'The only forward-looking change notice published is in the spec description: token mint quotas
+    "will be rolled out to existing clients on a separate schedule, and you will be contacted before that
+    change applies to you." No dated changelog is published.'
+changelog:
+  url: null
+  note: No API changelog found; https://docs.ritten.io/changelog and https://www.ritten.io/changelog both
+    404 (probed 2026-08-15).
+sla:
+  url: null
+  uptime_target: null
+status_page: null
+status_page_note: No status page. status.ritten.io returns HTTP 200 but is a DNS wildcard that redirects
+  to the marketing homepage https://www.ritten.io/, and ritten.statuspage.io redirects to Atlassian's
+  own product marketing page — neither is a Ritten status page. Probed 2026-08-15; no StatusPage pointer
+  emitted.
+evidence:
+- url: https://status.ritten.io
+  status: 200
+  result: redirects to https://www.ritten.io/ (wildcard catch-all, not a status page)
+- url: https://ritten.statuspage.io
+  status: 200
+  result: redirects to https://www.atlassian.com/software/statuspage
+- url: https://docs.ritten.io/changelog
+  status: 404

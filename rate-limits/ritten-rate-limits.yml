@@ -1,0 +1,41 @@
+generated: '2026-08-15'
+method: searched
+source: https://docs.ritten.io/swagger/openapi.yaml
+docs: https://docs.ritten.io/
+note: Rate limits are published verbatim in the OpenAPI info.description ("Rate Limiting" section), rendered
+  at https://docs.ritten.io/. Two distinct layers apply.
+limit_count: 3
+rate_limits:
+- name: API request rate (sustained)
+  scope: per-app / per-IP on authenticated calls
+  applies_to: All endpoints except POST /v1/oauth/token
+  limit: 50
+  unit: requests
+  window: 1 second
+  burst: 100
+  algorithm: token bucket — 100-token bucket refilling at 50 tokens/second
+  exhaustion_status: 429
+- name: Token mint quota (hourly)
+  scope: per-application (Auth0 layer)
+  applies_to: Access-token minting, counted across the legacy direct path and the cached /v1/oauth/token
+    endpoint combined
+  limit: 2
+  unit: token mints
+  window: 1 hour
+  exhaustion_status: 429
+- name: Token mint quota (daily)
+  scope: per-application (Auth0 layer)
+  applies_to: Access-token minting (combined paths)
+  limit: 3
+  unit: token mints
+  window: 1 day
+  exhaustion_status: 429
+response_headers: []
+response_headers_note: No rate-limit response headers (RateLimit-*, X-RateLimit-*, Retry-After) are documented
+  or declared in the spec. Clients get no runtime remaining-quota signal and can only react to a 429.
+mitigations:
+- Access tokens are long-lived (24h / expires_in 86400).
+- The /v1/oauth/token endpoint caches server-side, so repeat calls do not hit Auth0; Ritten states one
+  mint per day is sufficient at any traffic volume.
+rollout_note: Token mint quotas apply to newly-provisioned integrator clients; existing clients are migrated
+  on a separate schedule with prior notice.

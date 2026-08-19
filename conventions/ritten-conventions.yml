@@ -1,0 +1,81 @@
+generated: '2026-08-15'
+method: searched
+source: https://docs.ritten.io/swagger/openapi.yaml
+docs: https://docs.ritten.io/
+authentication:
+  style: OAuth 2.0 client_credentials -> Bearer token
+  artifact: authentication/ritten-authentication.yml
+  tenant_header:
+    name: X-Ritten-Tenant
+    required: true
+    example: ritclinic
+idempotency:
+  supported: false
+  header: null
+  note: No Idempotency-Key header, no idempotent-retry contract, and no deduplication guidance is documented
+    anywhere in the spec or docs. POST /patients, POST /cases and POST /encounters are all non-idempotent
+    creates. Recorded as an honest absence — no Idempotency pointer is emitted.
+pagination:
+  style: offset
+  parameters:
+  - name: limit
+    in: query
+    description: Page size
+  - name: offset
+    in: query
+    description: Number of records to skip
+  operations_supporting: 17
+  response_fields: null
+  note: Collection responses are returned as arrays/objects per operation; no standard envelope with a
+    total/next-cursor field is declared in the spec.
+filtering:
+  common_parameters:
+  - startDate
+  - endDate
+  - search
+  - tagIds
+  - matchAllTags
+  - patientIds[]
+  - statuses
+  - sortBy
+  date_range: startDate + endDate on 15 operations (primarily /insights/*)
+export:
+  csv:
+    parameter: csv
+    value: 'true'
+    operations: 16
+    note: Most /insights/* reporting endpoints support CSV export via ?csv=true instead of JSON.
+versioning:
+  scheme: uri-path
+  current: v1
+  base_url: https://api.ritten.io/v1
+  artifact: lifecycle/ritten-lifecycle.yml
+error_envelope:
+  oauth:
+    fields:
+    - error
+    - error_description
+    schema: OAuthErrorResponse
+  other: No declared schema for non-OAuth 4xx responses.
+  artifact: errors/ritten-problem-types.yml
+rate_limiting:
+  sustained: 50 requests/second
+  burst: 100
+  exhaustion_status: 429
+  artifact: rate-limits/ritten-rate-limits.yml
+  headers: null
+  headers_note: No RateLimit-* / X-RateLimit-* / Retry-After response headers are documented or declared
+    in the spec — an agent cannot read remaining quota at runtime, only react to a 429.
+request_tracing:
+  header: null
+  note: No request-id / correlation-id header is documented.
+metadata:
+  supported: false
+  note: No generic metadata/custom-field bag documented on core resources.
+field_expansion:
+  supported: false
+  note: No expand/include/sparse-fieldset parameter documented. A `clinical` boolean toggles clinical
+    detail on 2 operations.
+webhooks:
+  artifact: asyncapi/ritten-webhooks.yml
+  event_count: 6

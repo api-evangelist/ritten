@@ -1,0 +1,70 @@
+# Ritten
+
+> Ritten is a cloud-based EMR, CRM and revenue-cycle platform built specifically for behavioral health
+> and substance-use treatment organizations — detox, residential, PHP/IOP and outpatient providers.
+> Ritten publishes a public REST contract, the Ritten External API, for integrating partners:
+> OpenAPI 3.1.0, 56 paths / 71 operations / 93 schemas, plus 6 webhook events.
+> API credentials are provisioned by Ritten to partners; there is no self-service signup.
+
+## APIs
+
+- [Ritten External API](https://docs.ritten.io/): REST API for integrating partners covering patients,
+  contacts, cases (CRM admissions pipeline), programs, facilities, organizations, tasks, encounters,
+  forms, insurance payers, users/teams, calendar, and a 17-operation insights/reporting family.
+  Base URL `https://api.ritten.io/v1`.
+
+## Specs
+
+- [OpenAPI 3.1.0 (source)](https://docs.ritten.io/swagger/openapi.yaml): the published contract.
+- [OpenAPI (mirror)](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/openapi/ritten-external-api-openapi.yaml)
+- [OpenAPI Overlay](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/overlays/ritten-external-api-overlay.yaml)
+
+## Authentication
+
+- OAuth 2.0 `client_credentials`. `POST https://api.ritten.io/v1/oauth/token` with `client_id`,
+  `client_secret`, `audience: https://external-api.ritten.io`, `grant_type: client_credentials`.
+- Use the returned `access_token` as an HTTP Bearer token. Tokens live 24 hours (`expires_in: 86400`).
+- **`X-Ritten-Tenant` is required on every request** and selects the clinic instance (e.g. `ritclinic`).
+- Note: the OpenAPI declares no `securitySchemes`; the auth model is documented in prose only.
+
+## Rate limits
+
+- 50 requests/second sustained, 100 burst, `429` on exhaustion.
+- Token minting: 2 per hour, 3 per day, per application. Cache the token — the token endpoint also
+  caches server-side, so one mint per day suffices at any volume.
+- No `RateLimit-*` or `Retry-After` response headers are returned.
+
+## Events
+
+- 6 webhooks declared in the OpenAPI 3.1 `webhooks` block: `patient.created`, `patient.admit`,
+  `patient.transfer`, `patient.discharge`, `case.created`, `case.status.update`.
+- POST JSON `{"type": …, "data": {…}}`. Unsigned; no documented retry policy. Subscription is
+  provisioned by Ritten, not self-service.
+- [Webhook catalog](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/asyncapi/ritten-webhooks.yml)
+
+## Environments
+
+- Production: `https://api.ritten.io/v1`, audience `https://external-api.ritten.io`
+- Beta: `https://api.beta.ritten.io/v1`, audience `https://external-api.beta.ritten.io`
+
+## Docs
+
+- [API documentation (ReDoc)](https://docs.ritten.io/)
+- [Website](https://www.ritten.io/)
+- [Blog](https://www.ritten.io/blog)
+- [Support](https://www.ritten.io/support)
+- [Login](https://secure.ritten.io/)
+- [GitHub org](https://github.com/rittenlabs)
+
+## Agent skills
+
+- [Admit a patient to a Ritten program](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/skills/ritten-admit-patient.md)
+- [Sync a Ritten patient roster](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/skills/ritten-sync-patient-roster.md)
+- [Work the Ritten CRM admissions pipeline](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/skills/ritten-crm-intake-pipeline.md)
+- [Pull Ritten census and outcomes reports](https://raw.githubusercontent.com/api-evangelist/ritten/refs/heads/main/skills/ritten-census-and-outcomes-reporting.md)
+
+## Compliance
+
+- Built for HIPAA-regulated care and 42 CFR Part 2 substance-use confidentiality, with role-based
+  access controls and audit logs. No SOC 2 / ISO 27001 / HITRUST certification is published.
+- API responses carry PHI. No public status page, no published pricing, no first-party SDKs.

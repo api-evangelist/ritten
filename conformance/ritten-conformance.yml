@@ -1,19 +1,62 @@
-generated: '2026-07-21'
+generated: '2026-08-15'
 method: searched
-source: https://www.ritten.io/
-note: Ritten publishes no public API/OpenAPI; standards below are assessed from published
-  compliance posture on the marketing site, not from a spec.
+source: https://docs.ritten.io/swagger/openapi.yaml + https://www.ritten.io/
+note: 'Upgraded 2026-08-15: Ritten DOES publish a public OpenAPI 3.1.0 contract at https://docs.ritten.io/swagger/openapi.yaml
+  (the prior round recorded "no public API", which was wrong). Standards below are assessed against that
+  spec plus published compliance posture on the marketing site.'
 standards:
+- id: openapi-3.1
+  conforms: true
+  evidence: Published OpenAPI 3.1.0 document, 56 paths / 71 operations / 93 schemas, served at https://docs.ritten.io/swagger/openapi.yaml
+    and rendered via ReDoc at https://docs.ritten.io/
+- id: oauth2
+  conforms: true
+  evidence: 'OAuth 2.0 client_credentials grant documented; token endpoint POST https://api.ritten.io/v1/oauth/token
+    with client_id/client_secret/audience. NOTE: not declared as an OpenAPI securityScheme — documented
+    in info.description prose only.'
+- id: oauth2-rfc8414-discovery
+  conforms: false
+  evidence: /.well-known/oauth-authorization-server returns 404 on every Ritten host (probed 2026-08-15).
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration returns 404 on every Ritten host. Auth0 backs token issuance
+    but no OIDC discovery is exposed on Ritten domains.
+- id: bearer-token
+  conforms: true
+  evidence: Access token presented as HTTP Bearer on all non-token endpoints.
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: No application/problem+json responses; OAuth errors use an OAuth-2-style {error, error_description}
+    body, other 4xx carry no declared schema.
+- id: rfc6749-oauth-error-format
+  conforms: true
+  evidence: OAuthErrorResponse schema uses RFC 6749 error / error_description fields with standard codes
+    (invalid_request, unsupported_grant_type, invalid_client).
+- id: offset-pagination
+  conforms: true
+  evidence: limit + offset query parameters on 17 collection operations.
+- id: idempotency
+  conforms: false
+  evidence: No Idempotency-Key header or idempotent-retry contract documented in the spec or docs.
+- id: webhooks
+  conforms: true
+  evidence: OpenAPI 3.1 webhooks block declares 6 events (patient.admit, patient.transfer, patient.discharge,
+    patient.created, case.created, case.status.update).
+- id: asyncapi
+  conforms: false
+  evidence: No AsyncAPI document published; event surface is described in the OpenAPI webhooks block only.
 - id: hipaa
   conforms: true
-  evidence: 'Site states "Ritten is built for HIPAA-regulated care and behavioral health
-    confidentiality needs" with role-based access controls and audit logs.'
+  evidence: Site states "Ritten is built for HIPAA-regulated care and behavioral health confidentiality
+    needs" with role-based access controls and audit logs.
 - id: 42-cfr-part-2
   conforms: true
   evidence: Site explicitly cites 42 CFR Part 2 (substance-use confidentiality) support.
-- id: oauth2
-  conforms: false
-  evidence: No public OAuth2 authorization surface documented.
 - id: fhir-r4
   conforms: false
-  evidence: No public FHIR API documented.
+  evidence: No FHIR resources, endpoints, or /metadata capability statement in the published OpenAPI;
+    the External API is a proprietary REST contract, not a FHIR API.
+- id: soc2
+  conforms: false
+  evidence: No SOC 2 claim found on the marketing site; trust.ritten.io is a DNS wildcard that redirects
+    to the marketing homepage, not a trust center (probed 2026-08-15).

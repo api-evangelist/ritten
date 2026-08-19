@@ -1,0 +1,252 @@
+generated: '2026-08-15'
+method: derived
+source: openapi/ritten-external-api-openapi.yaml
+format: vendor-json
+note: 'Ritten''s External API does not use RFC 9457 application/problem+json. Only the OAuth token endpoint
+  carries a typed error schema (OAuthErrorResponse: {error, error_description}); all other 4xx responses
+  are documented with a human-readable description and no response schema, so the error body shape for
+  non-OAuth failures is not machine-readable from the spec.'
+envelope:
+  oauth_endpoint:
+    schema: OAuthErrorResponse
+    fields:
+    - error
+    - error_description
+    error_codes:
+    - invalid_request
+    - unsupported_grant_type
+    - invalid_audience
+    - invalid_client
+    - bad_gateway
+    - rate_limit_exceeded
+  other_endpoints:
+    schema: null
+    note: No response schema declared for 4xx on non-OAuth operations.
+status_summary:
+  '400': 16
+  '401': 2
+  '403': 2
+  '404': 13
+  '429': 1
+  '502': 1
+problems:
+- status: 400
+  title: Bad request (validation error)
+  occurrences: 1
+  example_operations:
+  - createCaseNote
+- status: 400
+  title: Bad request (validation error, or the case is archived)
+  occurrences: 1
+  example_operations:
+  - createCaseActionItem
+- status: 400
+  title: Bad request (validation error, unknown tag or case source)
+  occurrences: 2
+  example_operations:
+  - createCase
+  - updateCase
+- status: 400
+  title: Invalid ID or payload supplied
+  occurrences: 4
+  example_operations:
+  - patchPatient
+  - postPatientVitals
+  - patchPatientRelationship
+  - patchContact
+- status: 400
+  title: Invalid ID supplied
+  occurrences: 6
+  example_operations:
+  - getPatientById
+  - listPatientRelationships
+  - getContactById
+  - listContactRelationships
+- status: 400
+  title: Invalid date format
+  occurrences: 1
+  example_operations:
+  - getFacilityCensusReport
+- status: 400
+  title: Invalid date range
+  occurrences: 3
+  example_operations:
+  - getOrganizationNotes
+  - getCreatedCases
+  - getDisqualifiedCases
+- status: 400
+  title: Invalid organization ID
+  occurrences: 1
+  example_operations:
+  - getOrganization
+- status: 400
+  title: Invalid parameters
+  occurrences: 6
+  example_operations:
+  - getDischargesReport
+  - getAlosReport
+  - getProgramCensusReport
+  - getCensusReport
+- status: 400
+  title: Invalid parameters (missing required dates or invalid date format)
+  occurrences: 3
+  example_operations:
+  - getEncounterHistoryReport
+  - getClientEventHistoryReport
+  - getClientAttendanceByStatusReport
+- status: 400
+  title: Invalid parameters (missing required fields or invalid format)
+  occurrences: 1
+  example_operations:
+  - getFormOutcomesReport
+- status: 400
+  title: Invalid payload supplied
+  occurrences: 11
+  example_operations:
+  - createPatientRelationship
+  - createContact
+  - createContactRelationship
+  - postFacility
+- status: 400
+  title: Invalid payload supplied, or no fields set
+  occurrences: 1
+  example_operations:
+  - patchTask
+- status: 400
+  title: Invalid payload — unknown or ambiguous field label, value invalid for the field's type, or unsupported
+    form definition
+  occurrences: 1
+  example_operations:
+  - postPatientForm
+- status: 400
+  title: Invalid query parameters
+  occurrences: 7
+  example_operations:
+  - listFacilities
+  - listPrograms
+  - listOrganizations
+  - listOrganizationMembers
+- status: 400
+  title: Malformed request. The `error` field will be one of `invalid_request`, `unsupported_grant_type`,
+    or `invalid_audience`.
+  occurrences: 1
+  example_operations:
+  - postOAuthToken
+- status: 401
+  title: 'Auth0 rejected the supplied credentials (`error: invalid_client` or similar).'
+  occurrences: 1
+  example_operations:
+  - postOAuthToken
+- status: 401
+  title: Unauthorized
+  occurrences: 22
+  example_operations:
+  - createCase
+  - updateCase
+  - createCaseNote
+  - createCaseActionItem
+- status: 403
+  title: CRM feature flag not enabled
+  occurrences: 4
+  example_operations:
+  - getClinicOrganizations
+  - getOrganizationNotes
+  - getCreatedCases
+  - getDisqualifiedCases
+- status: 403
+  title: CRM is not available for this clinic or this integration has not been granted organization access.
+    Contact Ritten to enable access.
+  occurrences: 5
+  example_operations:
+  - listOrganizations
+  - postOrganization
+  - getOrganization
+  - patchOrganization
+- status: 404
+  title: Case not found
+  occurrences: 4
+  example_operations:
+  - getCase
+  - updateCase
+  - createCaseNote
+  - createCaseActionItem
+- status: 404
+  title: Contact not found
+  occurrences: 3
+  example_operations:
+  - getContactById
+  - patchContact
+  - listContactRelationships
+- status: 404
+  title: Facility not found
+  occurrences: 1
+  example_operations:
+  - patchFacility
+- status: 404
+  title: Insurance payer not found
+  occurrences: 1
+  example_operations:
+  - getInsurancePayerById
+- status: 404
+  title: No staff user found for the supplied assigneeId
+  occurrences: 1
+  example_operations:
+  - postTask
+- status: 404
+  title: Organization not found
+  occurrences: 3
+  example_operations:
+  - getOrganization
+  - patchOrganization
+  - listOrganizationMembers
+- status: 404
+  title: Patient not found
+  occurrences: 5
+  example_operations:
+  - getPatientById
+  - patchPatient
+  - postPatientVitals
+  - listPatientRelationships
+- status: 404
+  title: Patient or encounter type not found (archived encounter types are treated as not found)
+  occurrences: 1
+  example_operations:
+  - postEncounter
+- status: 404
+  title: Patient, form definition label, or encounter not found
+  occurrences: 1
+  example_operations:
+  - postPatientForm
+- status: 404
+  title: Program not found
+  occurrences: 1
+  example_operations:
+  - getProgram
+- status: 404
+  title: Program not found, or referenced facility not found or archived
+  occurrences: 1
+  example_operations:
+  - patchProgram
+- status: 404
+  title: Relationship not found
+  occurrences: 1
+  example_operations:
+  - patchPatientRelationship
+- status: 404
+  title: Task not found, or no staff user found for the supplied assigneeId
+  occurrences: 1
+  example_operations:
+  - patchTask
+- status: 429
+  title: Rate limit exceeded. Either the per-IP request rate limit on this endpoint, or the per-app Auth0
+    mint quota (2/hour, 3/day) has been reached. Retry after a short delay. If 429s persist, inspect whether
+    you are hitting per-IP request limits vs. triggering fresh Auth0 mints, then reach out to Ritten for
+    support.
+  occurrences: 1
+  example_operations:
+  - postOAuthToken
+- status: 502
+  title: Auth0 was unreachable or returned a 5xx error. Retry — Ritten does not cache failed responses.
+  occurrences: 1
+  example_operations:
+  - postOAuthToken

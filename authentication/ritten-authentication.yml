@@ -1,0 +1,65 @@
+generated: '2026-08-15'
+method: searched
+source: https://docs.ritten.io/swagger/openapi.yaml
+docs: https://docs.ritten.io/
+note: 'Ritten declares NO components.securitySchemes in its OpenAPI, so the mechanical derive finds nothing.
+  The auth model below is transcribed from the provider-published documentation in the spec info.description
+  (rendered at https://docs.ritten.io/). This is a real spec gap worth reporting to Ritten: the contract
+  is not self-describing for auth.'
+summary:
+  types:
+  - oauth2
+  - http
+  oauth2_flows:
+  - clientCredentials
+  api_key_in: []
+  declared_in_spec: false
+  documented_in_prose: true
+schemes:
+- name: OAuth2ClientCredentials
+  type: oauth2
+  flow: clientCredentials
+  token_url: https://api.ritten.io/v1/oauth/token
+  audience: https://external-api.ritten.io
+  credentials:
+  - client_id
+  - client_secret
+  request:
+    method: POST
+    content_type: application/json
+    body:
+      client_id: ${client_id}
+      client_secret: ${client_secret}
+      audience: https://external-api.ritten.io
+      grant_type: client_credentials
+  token_lifetime_seconds: 86400
+  issuer: Auth0 (fronted by a Ritten caching proxy at /v1/oauth/token)
+  scopes: []
+  scopes_note: No OAuth scopes are published. Access is provisioned per-integration by Ritten (e.g. CRM/organization
+    access must be explicitly granted), not selected by scope at token time.
+  sources:
+  - https://docs.ritten.io/swagger/openapi.yaml
+- name: BearerAuth
+  type: http
+  scheme: bearer
+  description: The access_token from the token endpoint is sent as the Bearer token on every non-token
+    request.
+  sources:
+  - https://docs.ritten.io/swagger/openapi.yaml
+additional_required_headers:
+- name: X-Ritten-Tenant
+  required: true
+  description: Selects the Ritten clinic instance the request targets. Required on every request.
+  example: ritclinic
+environments:
+- name: production
+  token_url: https://api.ritten.io/v1/oauth/token
+  audience: https://external-api.ritten.io
+  base_url: https://api.ritten.io/v1
+- name: beta
+  token_url: https://api.beta.ritten.io/v1/oauth/token
+  audience: https://external-api.beta.ritten.io
+access_model:
+  self_service: false
+  note: Credentials are issued by Ritten to integrating partners; there is no public self-service signup
+    for API credentials.

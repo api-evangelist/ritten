@@ -1,0 +1,55 @@
+generated: '2026-08-15'
+method: generated
+source: openapi/ritten-external-api-openapi.yaml
+note: Skills generated from the published Ritten OpenAPI 3.1.0. Every operationId referenced was verified
+  verbatim against the spec. Ritten publishes no AGENTS.md or first-party skills.
+skills:
+- file: ritten-admit-patient.md
+  name: Admit a patient to a Ritten program
+  api: openapi/ritten-external-api-openapi.yaml
+  operations:
+  - postOAuthToken
+  - getPatientByExternalId
+  - createPatient
+  - listPrograms
+  - listEncounterTypes
+  - postEncounter
+  - postPatientVitals
+- file: ritten-sync-patient-roster.md
+  name: Sync a Ritten patient roster
+  api: openapi/ritten-external-api-openapi.yaml
+  operations:
+  - postOAuthToken
+  - listPatients
+  - getPatientById
+  - getPatientByExternalId
+  - patchPatient
+  - listPatientRelationships
+  - createPatientRelationship
+  - attachDocument
+- file: ritten-crm-intake-pipeline.md
+  name: Work the Ritten CRM admissions pipeline
+  api: openapi/ritten-external-api-openapi.yaml
+  operations:
+  - postOAuthToken
+  - listCases
+  - createCase
+  - getCase
+  - updateCase
+  - createCaseNote
+  - createCaseActionItem
+  - listOrganizations
+  - listOrganizationMembers
+- file: ritten-census-and-outcomes-reporting.md
+  name: Pull Ritten census and outcomes reports
+  api: openapi/ritten-external-api-openapi.yaml
+  operations:
+  - postOAuthToken
+  - getCensusReport
+  - getProgramCensusReport
+  - getFacilityCensusReport
+  - getAdmissionsReport
+  - getDischargesReport
+  - getAlosReport
+  - getFormOutcomesReport
+  - getEventAuditReport

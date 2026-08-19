@@ -1,0 +1,68 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for Ritten External API
+  version: 1.0.0
+extends: openapi/ritten-external-api-openapi.yaml
+x-generated: '2026-08-15'
+x-method: generated
+x-source: openapi/ritten-external-api-openapi.yaml
+x-note: >-
+  Captures API Evangelist enhancements over Ritten's published OpenAPI without mutating it. The
+  headline gap this overlay documents: Ritten declares NO components.securitySchemes, so the contract
+  is not self-describing for authentication even though the auth model is fully documented in prose in
+  info.description. The securityScheme below is our RECOMMENDATION derived from that published prose,
+  not a Ritten-published declaration.
+actions:
+  - target: $.info
+    update:
+      x-apievangelist-profile: https://apis.io/provider/ritten/
+      x-artifacts:
+        authentication: authentication/ritten-authentication.yml
+        conventions: conventions/ritten-conventions.yml
+        errors: errors/ritten-problem-types.yml
+        rate-limits: rate-limits/ritten-rate-limits.yml
+        lifecycle: lifecycle/ritten-lifecycle.yml
+        data-model: data-model/ritten-data-model.yml
+        webhooks: asyncapi/ritten-webhooks.yml
+        skills: skills/_index.yml
+  - target: $.components.securitySchemes
+    description: >-
+      RECOMMENDED — Ritten's spec declares no securitySchemes. These are transcribed from the
+      authentication section Ritten publishes in info.description.
+    update:
+      OAuth2ClientCredentials:
+        type: oauth2
+        description: >-
+          OAuth 2.0 client_credentials. Request a token from POST /v1/oauth/token with client_id,
+          client_secret and audience https://external-api.ritten.io. Tokens last 24 hours.
+        flows:
+          clientCredentials:
+            tokenUrl: https://api.ritten.io/v1/oauth/token
+            scopes: {}
+      BearerAuth:
+        type: http
+        scheme: bearer
+        description: Access token from the token endpoint, sent as the Bearer token on all non-token requests.
+  - target: $.info
+    description: Cross-cutting runtime semantics Ritten documents in prose, surfaced as machine-readable extensions.
+    update:
+      x-tenancy:
+        header: X-Ritten-Tenant
+        required: true
+        description: Selects the Ritten clinic instance the request targets. Required on every request.
+      x-rate-limits:
+        sustained: 50/second
+        burst: 100
+        exhaustion_status: 429
+        response_headers: []
+        note: No RateLimit-*/Retry-After headers are returned; clients cannot read remaining quota at runtime.
+      x-token-mint-quota:
+        per_hour: 2
+        per_day: 3
+      x-idempotency:
+        supported: false
+        note: No Idempotency-Key contract; creates are not safe to blind-retry.
+      x-pagination:
+        style: offset
+        parameters: [limit, offset]
+        total_field: null

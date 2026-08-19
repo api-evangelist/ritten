@@ -1,0 +1,52 @@
+generated: '2026-08-15'
+method: searched
+source: https://github.com/rittenlabs + registry.npmjs.org + pypi.org (probed 2026-08-15)
+note: 'No first-party Ritten client libraries exist on any public registry. The rittenlabs GitHub org
+  has 2 public repos, neither an SDK: blend-go-sdk (a FORK of Blend''s Go toolbox, last pushed 2024-12-10)
+  and terraform-honeycomb-refinery (infrastructure module, last pushed 2023-12-06). The docs publish raw
+  curl examples only. No SDKs pointer is emitted.'
+package_count: 0
+official_package_count: 0
+packages: []
+probed:
+- registry: npm
+  name: ritten
+  status: 404
+  version: null
+- registry: npm
+  name: '@ritten/sdk'
+  status: 404
+  version: null
+- registry: npm
+  name: ritten-sdk
+  status: 404
+  version: null
+- registry: npm
+  name: '@rittenlabs/sdk'
+  status: 404
+  version: null
+- registry: pypi
+  name: ritten
+  status: 404
+  version: null
+- registry: pypi
+  name: ritten-api
+  status: 404
+  version: null
+github_org:
+  url: https://github.com/rittenlabs
+  public_repos: 2
+  first_party_sdks: 0
+  repos:
+  - name: blend-go-sdk
+    fork: true
+    language: Go
+    last_push: '2024-12-10'
+    official: false
+    note: Fork of blend/go-sdk — not a Ritten API client.
+  - name: terraform-honeycomb-refinery
+    fork: false
+    language: HCL
+    last_push: '2023-12-06'
+    official: true
+    note: Terraform module for Honeycomb Refinery — infrastructure, not an API client.
