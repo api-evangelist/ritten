@@ -53,6 +53,23 @@ tags:
 - Revenue Cycle Management
 - Clinical Documentation
 - Telehealth
+- OpenAPI
+- Webhook
+- Behavioral Health API
+- Substance Use Treatment
+- 42 CFR Part 2
+- Electronic Health Records
+tags_raw:
+- Company
+- Behavioral Health
+- EMR
+- EHR
+- Healthcare
+- Practice Management
+- HIPAA
+- Revenue Cycle Management
+- Clinical Documentation
+- Telehealth
 - API
 - OpenAPI
 - Webhooks
@@ -75,6 +92,16 @@ apis:
   baseURL: https://api.ritten.io/v1
   image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/ritten.png
   tags:
+  - Behavioral Health
+  - EMR
+  - EHR
+  - Healthcare
+  - Patients
+  - CRM
+  - Reporting
+  - Webhook
+  - HIPAA
+  tags_raw:
   - Behavioral Health
   - EMR
   - EHR
