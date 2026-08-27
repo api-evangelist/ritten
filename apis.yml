@@ -78,44 +78,16 @@ tags_raw:
 - 42 CFR Part 2
 - Electronic Health Records
 apis:
-- name: Ritten External API
-  description: The Ritten External API is the public REST contract for Ritten integrating partners. It
-    covers patients (create, read, patch, vitals, forms, relationships, attachments, external-id lookup),
-    contacts, CRM cases in the admissions pipeline, programs, facilities, organizations, tasks, clinical
-    encounters and encounter types, form definitions, insurance payers, users/teams and calendar events,
-    plus a 17-operation insights family for census, admissions, discharges, average length of stay, care
-    teams, attendance, event audit and form outcomes - most of which also export CSV via ?csv=true. Six
-    webhook events cover patient admit/transfer/discharge/created and case created/status-update. Every
-    request requires an OAuth 2.0 client_credentials bearer token and an X-Ritten-Tenant header identifying
-    the clinic instance.
+- aid: ritten:ritten-calendar-api
+  name: Ritten Calendar API
+  description: The calendar API from Ritten — 2 operation(s) for calendar.
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/ritten.png
   tags:
-  - Behavioral Health
-  - EMR
-  - EHR
-  - Healthcare
-  - Patients
-  - CRM
-  - Reporting
-  - Webhook
-  - HIPAA
-  tags_raw:
-  - Behavioral Health
-  - EMR
-  - EHR
-  - Healthcare
-  - Patients
-  - CRM
-  - Reporting
-  - Webhooks
-  - HIPAA
+  - calendar
   properties:
   - type: OpenAPI
-    url: openapi/ritten-external-api-openapi.yaml
-  - type: Overlay
-    url: overlays/ritten-external-api-overlay.yaml
+    url: openapi/ritten-calendar-api-openapi.yml
   - type: Documentation
     url: https://docs.ritten.io/
   - type: APIReference
@@ -136,8 +108,464 @@ apis:
     url: lifecycle/ritten-lifecycle.yml
   - type: Sandbox
     url: sandbox/ritten-sandbox.yml
-  - type: AgentSkill
-    url: skills/_index.yml
+- aid: ritten:ritten-cases-api
+  name: Ritten Cases API
+  description: Endpoints for accessing CRM cases (admissions pipeline).
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - cases
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-cases-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-contacts-api
+  name: Ritten Contacts API
+  description: The contacts API from Ritten — 3 operation(s) for contacts.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - contacts
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-contacts-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-encounters-api
+  name: Ritten Encounters API
+  description: >-
+    Endpoints for creating clinical encounters (visits) and discovering the
+
+    encounter types they are created from.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - encounters
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-encounters-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-facilities-api
+  name: Ritten Facilities API
+  description: Endpoints for accessing clinic facilities (service locations).
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - facilities
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-facilities-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-forms-api
+  name: Ritten Forms API
+  description: Endpoints for accessing form definitions and form-related data.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - forms
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-forms-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-insights-api
+  name: Ritten Insights API
+  description: >-
+    Ritten provides insights and reporting endpoints for analytics and data export.
+
+    These endpoints return various reports about admissions, discharges, census, billing, and CRM data.
+
+
+    Most endpoints support CSV export via the `csv=true` query parameter.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - insights
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-insights-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-insurance-api
+  name: Ritten Insurance API
+  description: The insurance API from Ritten — 2 operation(s) for insurance.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - insurance
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-insurance-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-oauth-api
+  name: Ritten OAUTH API
+  description: >-
+    OAuth 2.0 token endpoint for obtaining access tokens. This is the
+
+    recommended way to authenticate with the Ritten External API.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - oauth
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-oauth-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-organizations-api
+  name: Ritten Organizations API
+  description: >-
+    Endpoints for accessing CRM organizations and organization members. Requires CRM to be available for
+    the target clinic (`X-Ritten-Tenant`). Integrations must be explicitly provisioned by Ritten for organization
+    access.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - organizations
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-organizations-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-patients-api
+  name: Ritten Patients API
+  description: The patients API from Ritten — 8 operation(s) for patients.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - patients
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-patients-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-programs-api
+  name: Ritten Programs API
+  description: Endpoints for creating, accessing, and managing clinic programs.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - programs
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-programs-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-tasks-api
+  name: Ritten Tasks API
+  description: >-
+    Endpoints for accessing clinic tasks. Tasks linked to a client are only returned when the integration
+    is authorized to read that client.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - tasks
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-tasks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-users-api
+  name: Ritten Users API
+  description: The users API from Ritten — 6 operation(s) for users.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - users
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-users-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-webhooks-api
+  name: Ritten Webhooks API
+  description: >-
+    Ritten provides webhooks for various events that occur in the system.
+
+    Integrating partners can subscribe to these events to receive real-time updates.
+
+
+    Webhooks sent from Ritten are POST requests with a JSON body containing the event `type` and associated
+    `data`.
+
+    The schema for the `data` object will vary depending on the event type.
+
+    ```
+
+    {
+      "type": "patient.admit",
+      "data": {
+        "patientId": "182c2e54-3494-4b85-aba5-038cf539d5bf",
+        "programId": "9a5e64b0-0a73-4cb5-ab32-44fea16da4e1"
+      }
+    }
+
+    ```
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
