@@ -1,0 +1,59 @@
+slug: ritten
+provider: Ritten
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Healthcare Providers
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 4
+edges:
+- tag: calendar
+  spec_file: ritten-calendar-api-openapi.yml
+  capability_id: BC-2800.10
+  capability_id_l1: BC-2800
+  capability_name: Scheduling & Appointment Management
+  confidence: 0.75
+  evidence: POST /calendar/events/list  Query calendar events; POST /calendar/events  Create a new calendar
+    event
+  reason: Ritten is a behavioral-health EMR whose product covers scheduling; the tag exposes creation
+    and querying of calendar events, i.e. appointment/resource scheduling. Slight ambiguity as the events
+    are generic calendar objects, hence 0.75.
+- tag: patients
+  spec_file: ritten-patients-api-openapi.yml
+  capability_id: BC-2800.20
+  capability_id_l1: BC-2800
+  capability_name: Patient Registration Management
+  confidence: 0.75
+  evidence: 'POST /patients createPatient Create a new patient; schemas: PatientDemographics, PatientName,
+    Address, Insurance, PatientRelationship'
+  reason: Operations create and maintain the patient record with demographics, addresses, insurance and
+    contact relationships, plus chart attachments — the capture and stewardship of identity/demographic
+    data required to register a patient. Some spill into clinical capture (postPatientVitals), which is
+    why confidence is not higher.
+- tag: forms
+  spec_file: ritten-forms-api-openapi.yml
+  capability_id: BC-2830.10
+  capability_id_l1: BC-2830
+  capability_name: Clinical Note Documentation
+  confidence: 0.7
+  evidence: POST /patients/{id}/forms  Create a form on a patient chart and submit field values
+  reason: Submitting structured form field values onto a patient chart, with signature requirements on
+    form definitions, is structured clinical documentation in the EMR. Slight ambiguity as forms could
+    also be intake/consent documents, hence 0.7.
+- tag: users
+  spec_file: ritten-users-api-openapi.yml
+  capability_id: BC-620.20
+  capability_id_l1: BC-620
+  capability_name: Identity & Access Management
+  confidence: 0.7
+  evidence: POST /users/{id}/roles Assign a role to a user; DELETE /users/{id}/roles/{roleID} Remove a
+    role from a user; GET /staff List all clinic staff users
+  reason: User account lifecycle and role assignment for clinic staff and teams — identity and access
+    administration, not medical staff credentialing (no privileging, verification, or peer-review operations
+    appear).
