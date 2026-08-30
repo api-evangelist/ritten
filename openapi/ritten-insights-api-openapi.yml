@@ -1,0 +1,2028 @@
+openapi: 3.2.0
+info:
+  title: External Insights API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: insights
+  description: 'Ritten provides insights and reporting endpoints for analytics and data export.
+
+    These endpoints return various reports about admissions, discharges, census, billing, and CRM data.
+
+
+    Most endpoints support CSV export via the `csv=true` query parameter.
+
+    '
+paths:
+  /insights/admissions:
+    get:
+      tags:
+      - insights
+      summary: Get admissions report
+      description: Returns admissions report for patients admitted within the specified date range
+      operationId: getAdmissionsReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range (ISO 8601)
+        example: '2024-01-01T00:00:00Z'
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range (ISO 8601)
+        example: '2024-01-31T23:59:59Z'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Number of results to skip for pagination
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return results as CSV file
+      - name: clinical
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Filter for clinical programs only
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionsReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid query parameters
+        401:
+          description: Unauthorized
+  /insights/discharges:
+    get:
+      tags:
+      - insights
+      summary: Get discharges report
+      description: Returns discharge report for patients discharged within the specified date range
+      operationId: getDischargesReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: combineTransfers
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Combine transferred programs into episodes of care
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      - name: clinical
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Filter for clinical programs only
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DischargesReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/alos:
+    get:
+      tags:
+      - insights
+      summary: Get average length of stay report
+      description: Returns Average Length of Stay (ALOS) report for patients in the specified date range
+      operationId: getAlosReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlosReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/program-census:
+    get:
+      tags:
+      - insights
+      summary: Get program census report
+      description: Returns census statistics by program for the specified date range
+      operationId: getProgramCensusReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramCensusReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/census-report:
+    get:
+      tags:
+      - insights
+      summary: Get census report
+      description: Returns detailed census report of all active patients in the date range
+      operationId: getCensusReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: isBrief
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return brief version with fewer fields
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CensusReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/dbs:
+    get:
+      tags:
+      - insights
+      summary: Get daily billable services report
+      description: Returns Daily Billable Services (DBS) report for the specified date range
+      operationId: getDbsReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: Start date in format YYYY-MM-DD
+        example: '2024-01-01'
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: End date in format YYYY-MM-DD
+        example: '2024-01-31'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DbsReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/event-audit:
+    get:
+      tags:
+      - insights
+      summary: Get event audit report
+      description: Returns audit report for calendar events in the specified date range
+      operationId: getEventAuditReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: userIds[]
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Filter by user IDs
+        style: form
+        explode: true
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAuditReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters
+        401:
+          description: Unauthorized
+  /insights/facility-census:
+    get:
+      tags:
+      - insights
+      summary: Get facility census report
+      description: Returns facility census report (always returns CSV format)
+      operationId: getFacilityCensusReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: Start date in format YYYY-MM-DD
+        example: '2024-01-01'
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: End date in format YYYY-MM-DD
+        example: '2024-01-31'
+      responses:
+        200:
+          description: success (CSV only)
+          content:
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid date format
+        401:
+          description: Unauthorized
+  /insights/clinic-organizations:
+    get:
+      tags:
+      - insights
+      summary: Get clinic organizations
+      description: Returns list of all clinic organizations from CRM
+      operationId: getClinicOrganizations
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationsReport'
+            text/csv:
+              schema:
+                type: string
+        401:
+          description: Unauthorized
+        403:
+          description: CRM feature flag not enabled
+  /insights/organization-notes:
+    get:
+      tags:
+      - insights
+      summary: Get organization notes
+      description: Returns notes associated with organizations in the specified date range
+      operationId: getOrganizationNotes
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationNotesReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid date range
+        401:
+          description: Unauthorized
+        403:
+          description: CRM feature flag not enabled
+  /insights/created-cases:
+    get:
+      tags:
+      - insights
+      summary: Get created cases report
+      description: Returns CRM cases (deals) created within the specified date range
+      operationId: getCreatedCases
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedCasesReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid date range
+        401:
+          description: Unauthorized
+        403:
+          description: CRM feature flag not enabled
+  /insights/disqualified-cases:
+    get:
+      tags:
+      - insights
+      summary: Get disqualified cases report
+      description: Returns CRM cases (deals) that were disqualified within the specified date range
+      operationId: getDisqualifiedCases
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Pagination offset
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisqualifiedCasesReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid date range
+        401:
+          description: Unauthorized
+        403:
+          description: CRM feature flag not enabled
+  /insights/care-teams:
+    get:
+      tags:
+      - insights
+      summary: Get care teams report
+      description: Returns care team assignments for all currently active patients, including primary clinician and up to 10 additional team members with their roles
+      operationId: getCareTeamsReport
+      parameters:
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CareTeamsReport'
+            text/csv:
+              schema:
+                type: string
+        401:
+          description: Unauthorized
+  /insights/encounter-history:
+    get:
+      tags:
+      - insights
+      summary: Get encounter history report
+      description: Returns encounter history for patients within the specified date range, including encounter details, attendance, billing information, and associated forms
+      operationId: getEncounterHistoryReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range (ISO 8601)
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range (ISO 8601)
+      - name: patientIds[]
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Filter by specific patient IDs
+        style: form
+        explode: true
+      - name: creatorUserId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by encounter creator user ID
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterHistoryReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters (missing required dates or invalid date format)
+        401:
+          description: Unauthorized
+  /insights/client-event-history:
+    get:
+      tags:
+      - insights
+      summary: Get client event history report
+      description: Returns a detailed event-level history for patients within the specified date range, including scheduled, occurred, and cancelled events with attendance status and billing information
+      operationId: getClientEventHistoryReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range (ISO 8601)
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range (ISO 8601)
+      - name: patientIds[]
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Filter by specific patient IDs
+        style: form
+        explode: true
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientEventHistoryReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters (missing required dates or invalid date format)
+        401:
+          description: Unauthorized
+  /insights/client-attendance-by-status:
+    get:
+      tags:
+      - insights
+      summary: Get client attendance by status report
+      description: Returns a summary of event counts per attendance status for each client, grouped by program, level of care, and encounter type
+      operationId: getClientAttendanceByStatusReport
+      parameters:
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range (ISO 8601)
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range (ISO 8601)
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientAttendanceByStatusReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters (missing required dates or invalid date format)
+        401:
+          description: Unauthorized
+  /insights/form-outcomes:
+    get:
+      tags:
+      - insights
+      summary: Get form outcomes report
+      description: Returns outcomes data for a specific form definition within the specified date range, including patient information, encounter details, and form field values
+      operationId: getFormOutcomesReport
+      parameters:
+      - name: formDefinitionId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The form definition ID to get outcomes for
+      - name: startDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Start date of report range (ISO 8601)
+      - name: endDate
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: End date of report range (ISO 8601)
+      - name: patientIds[]
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Filter by specific patient IDs
+        style: form
+        explode: true
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+        description: Number of results to skip for pagination
+      - name: csv
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Return as CSV file
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormOutcomesReport'
+            text/csv:
+              schema:
+                type: string
+        400:
+          description: Invalid parameters (missing required fields or invalid format)
+        401:
+          description: Unauthorized
+components:
+  schemas:
+    DisqualifiedCasesReport:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            type: object
+            properties:
+              dealId:
+                type: string
+                format: uuid
+              dealName:
+                type: string
+              dealDisqualificationDate:
+                type: string
+                format: date-time
+              createdAt:
+                type: string
+                format: date-time
+              personSeekingTreatment:
+                type: string
+              dealContactNames:
+                type: string
+              referralPointOfContact:
+                type: string
+              referralOrganization:
+                type: string
+              referralOrganizationRelationshipOwners:
+                type: string
+              referralType:
+                type: string
+              dealSize:
+                type: integer
+                description: In cents
+              anticipatedPrograms:
+                type: array
+                items:
+                  type: string
+              referralSource:
+                type: string
+              caseSource:
+                type: string
+              dealOwner:
+                type: string
+              fundingSource:
+                type: string
+              payerGroupName:
+                type: string
+              payerName:
+                type: string
+              disqualificationReason:
+                type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+    AdmissionsReport:
+      type: object
+      properties:
+        admissions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: Admit
+              admitDate:
+                type: string
+                format: date-time
+              dischargeDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              program:
+                type: string
+              programId:
+                type: string
+                format: uuid
+                description: Clinic program ID corresponding to the program name
+              levelOfCare:
+                type: string
+              referralType:
+                type: string
+              referralOrganization:
+                type: string
+              referralPointOfContact:
+                type: string
+              mrn:
+                type: string
+              name:
+                type: string
+              age:
+                type: integer
+              sex:
+                type: string
+              notes:
+                type: string
+              primaryClinician:
+                type: string
+              phoneUse:
+                type: string
+              phoneNumber:
+                type: string
+              addressUse:
+                type: string
+              addressLine:
+                type: string
+              addressLine2:
+                type: string
+              addressCity:
+                type: string
+              addressRegion:
+                type: string
+              addressCountry:
+                type: string
+              addressPostalCode:
+                type: string
+              email:
+                type: string
+              notify:
+                type: boolean
+              portalEmail:
+                type: string
+              programLos:
+                type: integer
+                description: Length of stay in days
+              payerName:
+                type: string
+              insuranceStartDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              insuranceExpirationDate:
+                type:
+                - string
+                - 'null'
+                format: date
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+        clinical:
+          type: boolean
+    CareTeamsReport:
+      type: object
+      properties:
+        careTeams:
+          type: array
+          items:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              mrn:
+                type: string
+              activeClinicalProgram:
+                type: string
+                description: Active clinical program name with level of care
+              admitDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              activeAdditionalServices:
+                type: string
+                description: Pipe-separated list of additional services
+              payer:
+                type: string
+              primaryClinician:
+                type: string
+              primaryClinicianRoles:
+                type: string
+                description: Comma-separated list of roles
+              clinician2Name:
+                type: string
+              clinician2Roles:
+                type: string
+              clinician3Name:
+                type: string
+              clinician3Roles:
+                type: string
+              clinician4Name:
+                type: string
+              clinician4Roles:
+                type: string
+              clinician5Name:
+                type: string
+              clinician5Roles:
+                type: string
+              clinician6Name:
+                type: string
+              clinician6Roles:
+                type: string
+              clinician7Name:
+                type: string
+              clinician7Roles:
+                type: string
+              clinician8Name:
+                type: string
+              clinician8Roles:
+                type: string
+              clinician9Name:
+                type: string
+              clinician9Roles:
+                type: string
+              clinician10Name:
+                type: string
+              clinician10Roles:
+                type: string
+    ClientAttendanceByStatusReport:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              programName:
+                type: string
+              levelOfCare:
+                type: string
+              encounterType:
+                type: string
+              billable:
+                type: boolean
+              isGroup:
+                type: boolean
+              statusCounts:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Map of attendance type name to count
+              minutesAttended:
+                type: number
+              totalBillableUnits:
+                type: integer
+        attendanceTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              absent:
+                type: boolean
+              billable:
+                type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    EncounterHistoryReport:
+      type: object
+      properties:
+        encounters:
+          type: array
+          items:
+            type: object
+            properties:
+              encounterID:
+                type: string
+                format: uuid
+              patientID:
+                type: string
+                format: uuid
+              firstName:
+                type: string
+              lastName:
+                type: string
+              mrn:
+                type: string
+              program:
+                type: string
+                description: Current clinical program name
+              programLoc:
+                type: string
+                description: Level of care
+              encounterType:
+                type: string
+              isGroup:
+                type: boolean
+              isBilling:
+                type: boolean
+              encounterCreator:
+                type: string
+              supervisingProvider:
+                type: string
+              status:
+                type: string
+                enum:
+                - Pending
+                - In Progress
+                - Scheduled
+                - Complete
+                - Incomplete
+                - Cancelled
+              startTime:
+                type: string
+                format: date-time
+              endTime:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              attendanceType:
+                type: string
+              fundingSource:
+                type: string
+              primaryInsurancePayer:
+                type: string
+              minutesAttended:
+                type: number
+              groupEncounterID:
+                type:
+                - string
+                - 'null'
+                format: uuid
+              groupTitle:
+                type: string
+              modifiers:
+                type: array
+                items:
+                  type: string
+              completedForms:
+                type: integer
+              incompleteForms:
+                type: integer
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+        supervisingProvidersEnabled:
+          type: boolean
+    CensusReport:
+      type: object
+      properties:
+        patients:
+          type: array
+          items:
+            type: object
+            properties:
+              clientFirstName:
+                type: string
+              clientLastName:
+                type: string
+              mrn:
+                type: string
+              dob:
+                type:
+                - string
+                - 'null'
+                format: date
+              age:
+                type: integer
+              clinicalProgramNames:
+                type: array
+                items:
+                  type: string
+              levelsOfCare:
+                type: array
+                items:
+                  type: string
+              nonClinicalProgramNames:
+                type: array
+                items:
+                  type: string
+              originalAdmitDate:
+                type: string
+                format: date-time
+              estimatedDischargeDates:
+                type:
+                - string
+                - 'null'
+                format: date
+              teamNames:
+                type: array
+                items:
+                  type: string
+              primaryEmail:
+                type: string
+              primaryPhone:
+                type: string
+              race:
+                type: array
+                items:
+                  type: string
+              ethnicity:
+                type: array
+                items:
+                  type: string
+              preferredLanguage:
+                type: string
+              sex:
+                type: string
+              gender:
+                type: array
+                items:
+                  type: string
+              sexuality:
+                type: string
+              maritalStatus:
+                type: string
+              payerType:
+                type: string
+              payerName:
+                type: string
+              insuranceStartDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              insuranceExpirationDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              primaryClinicianFirst:
+                type: string
+              primaryClinicianLast:
+                type: string
+              diagnoses:
+                type: array
+                items:
+                  type: string
+              allergies:
+                type: array
+                items:
+                  type: string
+              billingAddressUse:
+                type: string
+              billingAddressCountry:
+                type: string
+              billingAddressLine:
+                type: string
+              billingAddressLine2:
+                type: string
+              billingAddressCity:
+                type: string
+              billingAddressRegion:
+                type: string
+              billingAddressPostalCode:
+                type: string
+              billingAddressNotes:
+                type: string
+              emergencyContactName:
+                type: string
+              emergencyContactPhone:
+                type: string
+              emergencyContactEmail:
+                type: string
+        isBrief:
+          type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    OrganizationNotesReport:
+      type: object
+      properties:
+        organizationNoteSet:
+          type: object
+          properties:
+            notes:
+              type: array
+              items:
+                type: object
+                properties:
+                  organizationId:
+                    type: string
+                    format: uuid
+                  organizationName:
+                    type: string
+                  primaryContactName:
+                    type: string
+                  noteTakenAt:
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  noteActivityType:
+                    type: string
+                  noteContent:
+                    type: string
+                  creator:
+                    type: string
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            clinicURL:
+              type: string
+    FormOutcomesReport:
+      type: object
+      required:
+      - outcomes
+      - formName
+      - startDate
+      - endDate
+      properties:
+        outcomes:
+          type: array
+          items:
+            type: object
+            required:
+            - mrn
+            - firstName
+            - lastName
+            - formInstanceId
+            - formCreatedAt
+            properties:
+              mrn:
+                type: string
+                description: Patient medical record number
+              firstName:
+                type: string
+              lastName:
+                type: string
+              clientStatus:
+                type: string
+                description: Patient status (e.g., Active, Discharged)
+              episodeAdmitDate:
+                type: string
+                format: date-time
+              program:
+                type: string
+                description: Clinical program name
+              levelOfCare:
+                type: string
+              additionalServices:
+                type: string
+              serviceEnrollmentDate:
+                type: string
+              los:
+                type: integer
+                description: Length of stay in days
+              encounterType:
+                type: string
+              encounterStartTime:
+                type: string
+                format: date-time
+              formInstanceId:
+                type: string
+                format: uuid
+              formCreatedAt:
+                type: string
+                format: date-time
+              formCreatedByFirst:
+                type: string
+                description: First name of user who created the form
+              formCreatedByLast:
+                type: string
+                description: Last name of user who created the form
+              fieldData:
+                type: object
+                additionalProperties:
+                  type: string
+                description: Map of field definition IDs to field values
+        formName:
+          type: string
+          description: Name of the form definition
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'
+    EventAuditReport:
+      type: object
+      properties:
+        eventAudits:
+          type: array
+          items:
+            type: object
+            properties:
+              eventId:
+                type: string
+                format: uuid
+              eventName:
+                type: string
+              eventEncounter:
+                type: string
+                description: Encounter type name
+              startTime:
+                type: string
+                format: date-time
+              minutesAttended:
+                type: number
+              isGroup:
+                type: boolean
+              staff:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - uuid
+                  - name
+                description: Staff attendee names
+              clients:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                    name:
+                      type: string
+                    mrn:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - patient
+                      - program
+                      - clinic team
+                  required:
+                  - uuid
+                  - name
+                  - type
+                description: Client attendee names
+              status:
+                type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    ClientEventHistoryReport:
+      type: object
+      properties:
+        Events:
+          type: array
+          items:
+            type: object
+            properties:
+              Date:
+                type: string
+                format: date-time
+              EventName:
+                type: string
+              StartTime:
+                type: string
+                format: date-time
+              EndTime:
+                type: string
+                format: date-time
+              TotalDuration:
+                type: number
+                description: Duration in minutes
+              Status:
+                type: string
+                description: Event status (Occurred, Scheduled, Canceled, OccurredNoEncounter)
+              AttendanceType:
+                type: string
+              Absent:
+                type: boolean
+              Billable:
+                type: boolean
+              BillableUnits:
+                type: integer
+              CancellationType:
+                type: string
+              Note:
+                type: string
+              PatientID:
+                type: string
+                format: uuid
+              FirstName:
+                type: string
+              LastName:
+                type: string
+              ProgramName:
+                type: string
+              LevelOfCare:
+                type: string
+              EncounterType:
+                type: string
+              IsGroup:
+                type: boolean
+        StartDate:
+          type: string
+          format: date-time
+        EndDate:
+          type: string
+          format: date-time
+    CreatedCasesReport:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            type: object
+            properties:
+              dealId:
+                type: string
+                format: uuid
+              dealName:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+              dealStatus:
+                type: string
+              caseSource:
+                type: string
+              dealOwner:
+                type: string
+              personSeekingTreatment:
+                type: string
+              dealContactNames:
+                type: string
+              referralPointOfContact:
+                type: string
+              referralOrganizations:
+                type: string
+              referralOrganizationRelationshipOwners:
+                type: string
+              referralType:
+                type: string
+              potentialAdmitDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              dealSize:
+                type: integer
+                description: In cents
+              anticipatedPrograms:
+                type: array
+                items:
+                  type: string
+              admittedDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              fundingSource:
+                type: string
+              payerGroupName:
+                type: string
+              payerName:
+                type: string
+        clinicURL:
+          type: string
+    ProgramCensusReport:
+      type: object
+      properties:
+        censuses:
+          type: array
+          items:
+            type: object
+            properties:
+              programId:
+                type: string
+                format: uuid
+              program:
+                type: string
+              programLoc:
+                type: array
+                items:
+                  type: string
+              average:
+                type: number
+                description: Average daily census
+              startCount:
+                type: integer
+                description: Beginning census
+              endCount:
+                type: integer
+                description: Ending census
+              minCount:
+                type: integer
+                description: Minimum census during period
+              maxCount:
+                type: integer
+                description: Maximum census during period
+              archived:
+                type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    DbsReport:
+      type: object
+      properties:
+        dbss:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              serviceDate:
+                type: string
+                format: date
+              patientID:
+                type: string
+                format: uuid
+              firstName:
+                type: string
+              lastName:
+                type: string
+              dob:
+                type:
+                - string
+                - 'null'
+                format: date
+              mrn:
+                type: string
+              diagnoses:
+                type: array
+                items:
+                  type: string
+              program:
+                type: string
+              programLoc:
+                type: string
+              facilityName:
+                type: string
+              fundingSource:
+                type: string
+              payerGroup:
+                type: string
+              procedureCode:
+                type: string
+              procedureCodeModifiers:
+                type: array
+                items:
+                  type: string
+              addOnCodes:
+                type: array
+                items:
+                  type: string
+              addOnBilledAmountTotal:
+                type: number
+              addOnAllowedAmountTotal:
+                type: number
+              revenueCode:
+                type: string
+              placeOfServiceCode:
+                type: string
+              isBundled:
+                type: boolean
+              minimumBundledMinutes:
+                type: integer
+              associated_encounters:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                    encounterTemplateId:
+                      type: string
+                      format: uuid
+                    patientId:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                    startTime:
+                      type: string
+                      format: date-time
+                    endTime:
+                      type:
+                      - string
+                      - 'null'
+                      format: date-time
+                    attendanceType:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    deletedAt:
+                      type:
+                      - string
+                      - 'null'
+                      format: date-time
+                    groupEncounterId:
+                      type:
+                      - string
+                      - 'null'
+                      format: uuid
+                    totalBillableMinutes:
+                      type: integer
+              billedRate:
+                type: number
+              expectedRate:
+                type: number
+              unitsTotal:
+                type: integer
+              claimStatus:
+                type: string
+              provider:
+                type: string
+              primaryPayerGroup:
+                type: string
+              primaryPayerName:
+                type: string
+              authStartDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              authEndDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              authBilledUnits:
+                type: integer
+              authUsedUnits:
+                type: integer
+              authRemainingUnits:
+                type: integer
+              authTrackingNumber:
+                type: string
+              authProcedureCodes:
+                type: array
+                items:
+                  type: string
+              authDiagnosis:
+                type: string
+              authPayerName:
+                type: string
+              authPayerID:
+                type:
+                - string
+                - 'null'
+                format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        clinicURL:
+          type: string
+    DischargesReport:
+      type: object
+      properties:
+        discharges:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              dischargeName:
+                type: string
+              admitDate:
+                type: string
+                format: date-time
+              dischargeDate:
+                type: string
+                format: date-time
+              program:
+                type: string
+              programId:
+                type: string
+                description: Clinic program ID corresponding to the program name. When combineTransfers=true, this is a comma-delimited list aligned with the comma-delimited program value.
+              transferToProgram:
+                type: string
+              levelOfCare:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              age:
+                type: integer
+              sex:
+                type: string
+              notes:
+                type: string
+              los:
+                type: integer
+                description: Length of stay in days
+              primaryClinician:
+                type: string
+              email:
+                type: string
+              notify:
+                type: boolean
+              portalEmail:
+                type: string
+        combineTransfers:
+          type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+        clinical:
+          type: boolean
+    OrganizationsReport:
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            type: object
+            properties:
+              orgName:
+                type: string
+              orgType:
+                type: string
+              url:
+                type: string
+              relationshipOwner:
+                type: string
+              primaryContact:
+                type: string
+              email:
+                type: string
+              phone:
+                type: string
+              addressLine:
+                type: string
+              addressLine2:
+                type: string
+              addressCity:
+                type: string
+              addressRegion:
+                type: string
+              addressCountry:
+                type: string
+              addressPostalCode:
+                type: string
+              memberCount:
+                type:
+                - integer
+                - 'null'
+    AlosReport:
+      type: object
+      properties:
+        aloss:
+          type: array
+          items:
+            type: object
+            properties:
+              clientFirstName:
+                type: string
+              clientLastName:
+                type: string
+              currentStatus:
+                type: string
+              age:
+                type: integer
+              sex:
+                type: string
+              current:
+                type: string
+                description: X if currently in program
+              program:
+                type: string
+              programType:
+                type: string
+              programLoc:
+                type: string
+              programLos:
+                type: integer
+                description: Length of stay in days
+              admitDate:
+                type: string
+                format: date-time
+              dischargeDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              primaryClinician:
+                type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time

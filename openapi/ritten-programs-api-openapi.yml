@@ -1,0 +1,305 @@
+openapi: 3.2.0
+info:
+  title: External Programs API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: programs
+  description: 'Endpoints for creating, accessing, and managing clinic programs.
+
+    '
+paths:
+  /programs:
+    post:
+      tags:
+      - programs
+      summary: Create a clinic program
+      description: 'Creates a clinic program. Requires name, programType, and at least one levelOfCare entry.
+
+        The server assigns the program ID; client-supplied id values and other unknown fields are rejected.
+
+        levelOfCare entries must be exact catalog strings, unique, and compatible with programType.
+
+        facilityId is optional.
+
+        '
+      operationId: postProgram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostProgramBody'
+      responses:
+        201:
+          description: Program created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicProgram'
+        400:
+          description: Invalid payload supplied
+    get:
+      tags:
+      - programs
+      summary: List active programs in a clinic
+      description: Lists active clinic programs with pagination and optional filters. Archived programs are never returned by the external API.
+      operationId: listPrograms
+      parameters:
+      - name: facilityId
+        in: query
+        description: Filter programs by active facility ID.
+        schema:
+          type: string
+          format: uuid
+      - name: programType
+        in: query
+        description: Filter programs by type.
+        schema:
+          $ref: '#/components/schemas/ProgramType'
+      - name: search
+        in: query
+        description: Case-insensitive search on program name.
+        schema:
+          type: string
+          maxLength: 255
+      - name: limit
+        in: query
+        description: How many programs to return at one time (max 200).
+        schema:
+          maximum: 200
+          minimum: 1
+          type: integer
+          format: int64
+          default: 200
+      - name: offset
+        in: query
+        description: How many programs to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPrograms'
+        400:
+          description: Invalid query parameters
+  /programs/{id}:
+    get:
+      tags:
+      - programs
+      summary: Get an active program
+      description: Gets an active clinic program by ID. Archived programs are treated as not found.
+      operationId: getProgram
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Program ID.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicProgram'
+        404:
+          description: Program not found
+    patch:
+      tags:
+      - programs
+      summary: Update a clinic program
+      description: 'Partially updates an active clinic program''s name and/or facility association.
+
+        At least one of name or facilityId must be provided; omitted fields are left unchanged.
+
+        programType and levelOfCare cannot be updated via this endpoint.
+
+        A malformed facilityId UUID returns 400. A missing or archived facilityId returns 404.
+
+        '
+      operationId: patchProgram
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Program ID.
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchProgramBody'
+      responses:
+        204:
+          description: Program updated successfully.
+        400:
+          description: Invalid payload supplied
+        404:
+          description: Program not found, or referenced facility not found or archived
+components:
+  schemas:
+    ClinicProgram:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        name:
+          type: string
+          example: Residential
+        facility:
+          anyOf:
+          - $ref: '#/components/schemas/ProgramFacility'
+          - type: 'null'
+        programType:
+          $ref: '#/components/schemas/ProgramType'
+        levelOfCare:
+          type: array
+          items:
+            $ref: '#/components/schemas/LevelOfCare'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    ProgramFacility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+    PostProgramBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract with a limited field set. Does not accept id; the server assigns the program ID on create.
+
+        '
+      required:
+      - name
+      - programType
+      - levelOfCare
+      example:
+        name: Residential Treatment
+        programType: Clinical
+        levelOfCare:
+        - Clinically Managed High-Intensity Residential Services (3.5)
+        facilityId: 182c2e54-3494-4b85-aba5-038cf539d5bf
+      properties:
+        name:
+          type: string
+          description: Program name. Leading and trailing whitespace is trimmed.
+          example: Residential
+        facilityId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Optional active facility ID to associate with the program.
+        programType:
+          $ref: '#/components/schemas/ProgramType'
+        levelOfCare:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: 'Exact catalog level-of-care values. Entries must be unique and compatible with programType
+
+            (Clinical programs require clinical LOCs; Additional Service programs require non-clinical LOCs).
+
+            '
+          items:
+            $ref: '#/components/schemas/LevelOfCare'
+    PatchProgramBody:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'Partial update body. At least one of name or facilityId must be provided.
+
+        Omitted fields are left unchanged; programType and levelOfCare are not patchable.
+
+        '
+      properties:
+        name:
+          type: string
+          description: Program name. Leading and trailing whitespace is trimmed.
+          example: Residential
+        facilityId:
+          type: string
+          format: uuid
+          description: Active facility ID to associate with the program.
+    ListPrograms:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicProgram'
+    LevelOfCare:
+      type: string
+      enum:
+      - Early Intervention (0.5)
+      - Outpatient Services (1.0)
+      - Long-Term Remission Monitoring (1.0)
+      - Outpatient Therapy (1.5)
+      - Medically Managed Outpatient (1.7)
+      - IOP/PHP - General (2)
+      - IOP (2.1)
+      - HIOP (High-Intensity Outpatient) (2.5)
+      - PHP (2.5)
+      - Medically Managed Intensive Outpatient (2.7)
+      - Residential - General (3)
+      - Clinically Managed Low-Intensity Residential Services (3.1)
+      - Clinically Managed Population-Specific High-Intensity Services (3.2)
+      - Clinically Managed High-Intensity Residential Services (3.5)
+      - Medically Monitored Intensive Inpatient Services (3.7)
+      - Medically Managed Residential (3.7)
+      - Medically Managed Intensive Inpatient Services (4)
+      - Ambulatory Detox Without Extended Onsite Monitoring (I-D)
+      - Ambulatory Detox With Extended Onsite Monitoring (II-D)
+      - Clinically Managed Residential Detoxification (III.2-D)
+      - Medically Monitored Inpatient Detoxification (III.7-D)
+      - Medically Managed Intensive Inpatient Detoxification (IV-D)
+      - Sober Living
+      - Recovery Residence
+      - Case Management
+      - Monitoring / Drug Testing
+      - Peer Support
+      - Advisory Services
+      - Medication Management
+      - Other
+      - Other - Clinical
+      - Level 3 (3)
+      - Significant Treatment (3)
+      - Level 4 (4)
+      - Level 5 (5)
+    ProgramType:
+      type: string
+      enum:
+      - Clinical
+      - Additional Service

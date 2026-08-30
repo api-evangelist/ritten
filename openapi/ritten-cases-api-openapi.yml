@@ -1,0 +1,538 @@
+openapi: 3.2.0
+info:
+  title: External Cases API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: cases
+  description: 'Endpoints for accessing CRM cases (admissions pipeline).
+
+    '
+paths:
+  /cases:
+    get:
+      tags:
+      - cases
+      summary: List cases in a clinic
+      description: Lists CRM cases (admissions pipeline) in a clinic
+      operationId: listCases
+      parameters:
+      - name: limit
+        in: query
+        description: How many cases to return at one time (max 20, min 0).
+        schema:
+          maximum: 20
+          minimum: 0
+          type: integer
+          format: int64
+      - name: offset
+        in: query
+        description: How many cases to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+      - name: tagIds
+        in: query
+        description: Filter by one or more tag IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: matchAllTags
+        in: query
+        description: When true, only return records that have ALL selected tags (AND). Default false returns records matching ANY selected tag (OR).
+        schema:
+          type: boolean
+          default: false
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCases'
+        400:
+          description: Invalid query parameters
+    post:
+      tags:
+      - cases
+      summary: Create a case
+      description: Creates a new CRM case (deal). Case status cannot be set during creation; all cases are created with status "new". Tags and caseSource must be provided as plain text names and must match existing values in the system.
+      operationId: createCase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCaseBody'
+      responses:
+        200:
+          description: Successfully created case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Bad request (validation error, unknown tag or case source)
+        401:
+          description: Unauthorized
+  /cases/{id}:
+    get:
+      tags:
+      - cases
+      summary: Retrieve a case by ID
+      description: Returns a single CRM case
+      operationId: getCase
+      parameters:
+      - name: id
+        in: path
+        description: ID of the case to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Invalid ID supplied
+        404:
+          description: Case not found
+    patch:
+      tags:
+      - cases
+      summary: Update a case
+      description: Updates an existing CRM case (deal). Case status cannot be updated through this endpoint. Tags and caseSource must be provided as plain text names and must match existing values in the system.
+      operationId: updateCase
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the case to update
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchCaseBody'
+      responses:
+        200:
+          description: Successfully updated case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Bad request (validation error, unknown tag or case source)
+        401:
+          description: Unauthorized
+        404:
+          description: Case not found
+  /cases/{id}/notes:
+    post:
+      tags:
+      - cases
+      summary: Create a case note
+      description: Adds a plain-text note to an existing CRM case.
+      operationId: createCaseNote
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the case to add a note to
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCaseNoteBody'
+      responses:
+        200:
+          description: Successfully created case note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseNote'
+        400:
+          description: Bad request (validation error)
+        401:
+          description: Unauthorized
+        404:
+          description: Case not found
+  /cases/{id}/action-items:
+    post:
+      tags:
+      - cases
+      summary: Create a case action item
+      description: 'Adds an action item to an existing CRM case. Action items are the follow-up
+
+        tasks shown on the case in-app.
+
+
+        Newly created action items are always incomplete; completing one is not
+
+        supported through this API. Requests are not idempotent: retrying a
+
+        successful call creates a second action item.
+
+        '
+      operationId: createCaseActionItem
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the case to add an action item to
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCaseActionItemBody'
+      responses:
+        200:
+          description: Successfully created case action item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseActionItem'
+        400:
+          description: Bad request (validation error, or the case is archived)
+        401:
+          description: Unauthorized
+        404:
+          description: Case not found
+components:
+  schemas:
+    PostCaseBody:
+      type: object
+      required:
+      - caseName
+      properties:
+        caseName:
+          type: string
+          description: Name of the case (required)
+          example: John Doe
+        personSeekingTreatmentId:
+          type: string
+          format: uuid
+          description: ID of the person seeking treatment
+        caseOwnerId:
+          type: string
+          format: uuid
+          description: ID of the staff member who owns this case
+        contactIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of contacts associated with this case
+        caseSource:
+          type: string
+          description: Name of the case source (must match an existing case source)
+          example: Website
+        caseSizeCents:
+          type: integer
+          minimum: 0
+          description: Case value in cents
+          example: 10000
+        potentialAdmitDate:
+          type: string
+          format: date-time
+          description: Potential admission date (ISO 8601)
+          example: '2024-01-01T00:00:00Z'
+        followUpDate:
+          type: string
+          format: date-time
+          description: Follow-up date (ISO 8601)
+          example: '2024-01-15T00:00:00Z'
+        potentialProgramIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of potential programs for this case
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tag names to apply to the case (must match existing tags)
+          example:
+          - urgent
+          - self-referral
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation date (must be in the past, defaults to today if not provided)
+          example: '2024-01-01T00:00:00Z'
+    Program:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        programName:
+          type: string
+          example: Residential
+        programType:
+          type: string
+          example: clinical
+    CaseActionItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        caseId:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        content:
+          type: string
+          example: Call the referral source to confirm insurance
+        isComplete:
+          type: boolean
+          example: false
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        completedBy:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    PostCaseNoteBody:
+      type: object
+      required:
+      - note
+      properties:
+        note:
+          type: string
+          description: The plain-text content of the note
+          example: Patient called to confirm intake appointment
+        userId:
+          type: string
+          format: uuid
+          description: Optional ID of the user who wrote the note
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+    PatchCaseBody:
+      type: object
+      properties:
+        caseName:
+          type: string
+          description: Name of the case
+          example: John Doe
+        personSeekingTreatmentId:
+          type: string
+          format: uuid
+          description: ID of the person seeking treatment
+        caseOwnerId:
+          type: string
+          format: uuid
+          description: ID of the staff member who owns this case
+        contactIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of contacts associated with this case (replaces existing)
+        caseSource:
+          type: string
+          description: Name of the case source (must match an existing case source)
+          example: Website
+        caseSizeCents:
+          type: integer
+          minimum: 0
+          description: Case value in cents
+          example: 10000
+        potentialAdmitDate:
+          type: string
+          format: date-time
+          description: Potential admission date (ISO 8601)
+          example: '2024-01-01T00:00:00Z'
+        followUpDate:
+          type: string
+          format: date-time
+          description: Follow-up date (ISO 8601)
+          example: '2024-01-15T00:00:00Z'
+        potentialProgramIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of potential programs for this case (replaces existing)
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tag names to apply to the case (replaces existing tags, must match existing tags)
+          example:
+          - urgent
+          - self-referral
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation date (must be in the past)
+          example: '2024-01-01T00:00:00Z'
+    CaseContact:
+      type: object
+      description: 'A contact as it appears on a case. Deliberately narrower than the Contact returned by
+
+        the /contacts endpoints: it carries identity only, with no email or organizations.
+
+        '
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        first:
+          type: string
+          example: John
+        middle:
+          type: string
+        last:
+          type: string
+          example: Doe
+        dob:
+          type: string
+          description: Always empty on this surface. Use GET /contacts/{id} for a contact's date of birth.
+          example: ''
+        mrn:
+          type: string
+          description: Ritten Medical Record Number (if applicable)
+        createdAt:
+          type: string
+          format: date-time
+          description: Contact record creation timestamp.
+          example: '2024-01-01T00:00:00Z'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'
+    PostCaseActionItemBody:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          description: The description of the action item
+          example: Call the referral source to confirm insurance
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        caseName:
+          type: string
+          example: John Doe
+        status:
+          type: string
+          example: New
+        caseSource:
+          type: string
+        caseSizeCents:
+          type: integer
+          description: Case value in cents
+          example: 10000
+        potentialAdmitDate:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        followUpDate:
+          type: string
+          format: date-time
+          example: '2024-01-15T00:00:00Z'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        personSeekingTreatment:
+          $ref: '#/components/schemas/CaseContact'
+        caseOwner:
+          $ref: '#/components/schemas/User'
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseContact'
+        potentialPrograms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Program'
+        tags:
+          type: array
+          items:
+            type: string
+    CaseNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        caseId:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        note:
+          type: string
+          example: Patient called to confirm intake appointment
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        owner:
+          $ref: '#/components/schemas/User'
+    ListCases:
+      type: array
+      items:
+        $ref: '#/components/schemas/Case'

@@ -1,0 +1,391 @@
+openapi: 3.2.0
+info:
+  title: External Organizations API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: organizations
+  description: 'Endpoints for accessing CRM organizations and organization members. Requires CRM to be available for the target clinic (`X-Ritten-Tenant`). Integrations must be explicitly provisioned by Ritten for organization access.
+
+    '
+paths:
+  /organizations:
+    get:
+      tags:
+      - organizations
+      summary: List active organizations in a clinic
+      description: Lists active CRM organizations with pagination and optional filters. Requires CRM to be available for the target clinic and organization access to be granted by Ritten.
+      operationId: listOrganizations
+      parameters:
+      - name: search
+        in: query
+        description: Case-insensitive search on organization name.
+        schema:
+          type: string
+      - name: organizationTypeIds
+        in: query
+        description: Filter by one or more organization type IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: assignedUserIds
+        in: query
+        description: Filter by one or more assigned user IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: tagIds
+        in: query
+        description: Filter by one or more tag IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: matchAllTags
+        in: query
+        description: When true, only return records that have ALL selected tags (AND). Default false returns records matching ANY selected tag (OR).
+        schema:
+          type: boolean
+          default: false
+      - name: sortBy
+        in: query
+        description: Sort order for returned organizations.
+        schema:
+          type: string
+          enum:
+          - name_asc
+          - name_desc
+          - createdAt_asc
+          - createdAt_desc
+      - name: limit
+        in: query
+        description: How many organizations to return at one time (max 20).
+        schema:
+          maximum: 20
+          minimum: 1
+          type: integer
+          format: int64
+          default: 20
+      - name: offset
+        in: query
+        description: How many organizations to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrganizations'
+        400:
+          description: Invalid query parameters
+        403:
+          description: CRM is not available for this clinic or this integration has not been granted organization access. Contact Ritten to enable access.
+    post:
+      tags:
+      - organizations
+      summary: Create an organization in a clinic
+      description: Creates a CRM organization with optional contact, website, address, assigned user, and primary contact information. Requires CRM to be available for the target clinic and organization access to be granted by Ritten.
+      operationId: postOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostOrganizationBody'
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        400:
+          description: Invalid payload supplied
+        403:
+          description: CRM is not available for this clinic or this integration has not been granted organization access. Contact Ritten to enable access.
+  /organizations/{id}:
+    get:
+      tags:
+      - organizations
+      summary: Get an active organization
+      description: Returns a single active CRM organization by ID. Requires CRM to be available for the target clinic and organization access to be granted by Ritten.
+      operationId: getOrganization
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Organization ID.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        400:
+          description: Invalid organization ID
+        403:
+          description: CRM is not available for this clinic or this integration has not been granted organization access. Contact Ritten to enable access.
+        404:
+          description: Organization not found
+    patch:
+      tags:
+      - organizations
+      summary: Update an organization
+      description: Updates direct flat fields on an active CRM organization. Nested resources such as contact points, tags, addresses, and primary contacts are not supported by this endpoint. Requires CRM to be available for the target clinic and organization access to be granted by Ritten.
+      operationId: patchOrganization
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Organization ID.
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchOrganizationBody'
+      responses:
+        204:
+          description: Organization updated successfully.
+        400:
+          description: Invalid payload supplied
+        403:
+          description: CRM is not available for this clinic or this integration has not been granted organization access. Contact Ritten to enable access.
+        404:
+          description: Organization not found
+  /organizations/{id}/members:
+    get:
+      tags:
+      - organizations
+      summary: List active organization members
+      description: Lists member relationships for an active CRM organization. Requires CRM to be available for the target clinic and organization access to be granted by Ritten.
+      operationId: listOrganizationMembers
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Organization ID.
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        description: How many members to return at one time (max 20).
+        schema:
+          maximum: 20
+          minimum: 1
+          type: integer
+          format: int64
+          default: 20
+      - name: offset
+        in: query
+        description: How many members to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrganizationMembers'
+        400:
+          description: Invalid query parameters
+        403:
+          description: CRM is not available for this clinic or this integration has not been granted organization access. Contact Ritten to enable access.
+        404:
+          description: Organization not found
+components:
+  schemas:
+    ListOrganizations:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    PatchOrganizationBody:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Organization name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+    PostOrganizationBody:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - typeId
+      properties:
+        name:
+          type: string
+          description: Organization name.
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        email:
+          type: string
+          format: email
+          description: Primary work email for the organization.
+          example: admissions@example.com
+        phone:
+          type: string
+          description: Primary work phone for the organization.
+          example: 555-555-5555
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+        address:
+          $ref: '#/components/schemas/PostOrganizationAddress'
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization.
+        primaryContactId:
+          type: string
+          format: uuid
+          description: Person to set as the organization's primary contact.
+    OrganizationMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Organization-person relationship ID.
+        personId:
+          type: string
+          format: uuid
+        first:
+          type: string
+          example: Jane
+        last:
+          type: string
+          example: Doe
+    ListOrganizationMembers:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMember'
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization, if any.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    PostOrganizationAddress:
+      type: object
+      properties:
+        country:
+          type: string
+          example: US
+        line:
+          type: string
+          description: Street address line 1.
+          example: 123 Main St
+        line2:
+          type: string
+          description: Street address line 2.
+          example: Suite 100
+        city:
+          type: string
+          example: New York
+        region:
+          type: string
+          example: NY
+        postalCode:
+          type: string
+          example: '10001'
+        notes:
+          type: string
+          example: Main admissions office

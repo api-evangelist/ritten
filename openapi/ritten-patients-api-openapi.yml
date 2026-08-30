@@ -1,0 +1,1035 @@
+openapi: 3.2.0
+info:
+  title: External Patients API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: patients
+paths:
+  /patients:
+    get:
+      tags:
+      - patients
+      summary: List patients in a clinic
+      description: Lists patients in a clinic
+      operationId: listPatients
+      parameters:
+      - name: programStatus
+        in: query
+        description: Patient Program status filter
+        required: true
+        schema:
+          type: string
+          enum:
+          - prospective
+          - active
+          - former
+      - name: limit
+        in: query
+        description: How many patients to return at one time (max 20).
+        schema:
+          maximum: 20
+          type: integer
+          format: int64
+      - name: offset
+        in: query
+        description: How many patients to skip before returning the limit number of patients. Use this to page.
+        schema:
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPatients'
+    post:
+      tags:
+      - patients
+      summary: Create a new patient
+      description: Creates a new patient record (this will generate an MRN and put the patient in 'prospective' status)
+      operationId: createPatient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - name
+              properties:
+                name:
+                  $ref: '#/components/schemas/PatientName'
+                dob:
+                  type: string
+                  description: Date of birth (YYYY-MM-DD)
+                  example: '1990-02-23'
+                externalId:
+                  type: string
+                  description: An external identifier for the patient (e.g. an ID from a third-party system)
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDSchema'
+  /patients/{id}:
+    get:
+      tags:
+      - patients
+      summary: Retrieve a patient by ID
+      description: Returns a single patient
+      operationId: getPatientById
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDetail'
+        400:
+          description: Invalid ID supplied
+        404:
+          description: Patient not found
+    patch:
+      tags:
+      - patients
+      summary: Update a patient by ID
+      description: 'Update a single patient. Returns the updated patient.
+
+        Omitting a top-level field in the request body will leave it unchanged.
+
+        '
+      operationId: patchPatient
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  allOf:
+                  - $ref: '#/components/schemas/PatientName'
+                  description: The patient's name. Omitted nested fields are left unchanged.
+                dob:
+                  type: string
+                  description: Date of birth (YYYY-MM-DD)
+                  example: '1990-02-23'
+                ssn:
+                  type: string
+                  writeOnly: true
+                  description: Full Social Security number. Accepted with or without dashes and never returned in patient responses.
+                  examples:
+                  - 123-45-6789
+                  - '123456789'
+                demographics:
+                  $ref: '#/components/schemas/PatientDemographics'
+                emails:
+                  type: array
+                  items:
+                    type: string
+                    example: john@example.com
+                phones:
+                  type: array
+                  items:
+                    type: string
+                    example: '+15555555555'
+                addresses:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Address'
+                  description: The patient's addresses. To update an existing address, include the address ID.
+                referrals:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Referral'
+                  description: The patient's referrals. To update an existing referral, include the referral ID.
+                insurance:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Insurance'
+                  description: The patient's insurance information. To update an existing insurance record, include the insurance ID.
+                externalId:
+                  type: string
+                  description: An external identifier for the patient (e.g. an ID from a third-party system)
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDetail'
+        400:
+          description: Invalid ID or payload supplied
+        404:
+          description: Patient not found
+  /patients/{id}/vitals:
+    post:
+      tags:
+      - patients
+      summary: Record patient vitals
+      description: 'Records a single vital observation for the patient. Units are fixed by observation and measurement type;
+
+        do not include units in the request body.
+
+        '
+      operationId: postPatientVitals
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to record vitals for
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPatientVital'
+            examples:
+              temperature:
+                summary: Temperature in Fahrenheit
+                value:
+                  type: temperature
+                  measurements:
+                  - value: 98.6
+                  timestamp: '2026-05-27T15:30:00Z'
+              heart_rate:
+                summary: Heart rate in beats per minute
+                value:
+                  type: heart_rate
+                  measurements:
+                  - value: 72
+                  timestamp: '2026-05-27T15:30:00Z'
+              respiration_rate:
+                summary: Respiration rate in breaths per minute
+                value:
+                  type: respiration_rate
+                  measurements:
+                  - value: 16
+                  timestamp: '2026-05-27T15:30:00Z'
+              oxygen_saturation:
+                summary: Oxygen saturation percentage
+                value:
+                  type: oxygen_saturation
+                  measurements:
+                  - value: 98
+                  timestamp: '2026-05-27T15:30:00Z'
+              blood_pressure:
+                summary: Blood pressure in mmHg
+                value:
+                  type: blood_pressure
+                  measurements:
+                  - type: systolic
+                    value: 120
+                  - type: diastolic
+                    value: 80
+                  timestamp: '2026-05-27T15:30:00Z'
+              glucose:
+                summary: Glucose in mg/dL
+                value:
+                  type: glucose
+                  measurements:
+                  - value: 110
+                  timestamp: '2026-05-27T15:30:00Z'
+              blood_alcohol_concentration:
+                summary: Blood alcohol concentration percentage
+                value:
+                  type: blood_alcohol_concentration
+                  measurements:
+                  - value: 0.02
+                  timestamp: '2026-05-27T15:30:00Z'
+              height_weight_height_only:
+                summary: Height in total inches
+                value:
+                  type: height_weight
+                  measurements:
+                  - type: height
+                    value: 70
+                  timestamp: '2026-05-27T15:30:00Z'
+              height_weight_weight_only:
+                summary: Weight in pounds
+                value:
+                  type: height_weight
+                  measurements:
+                  - type: weight
+                    value: 180
+                  timestamp: '2026-05-27T15:30:00Z'
+              height_weight_both:
+                summary: Height in total inches and weight in pounds
+                value:
+                  type: height_weight
+                  measurements:
+                  - type: height
+                    value: 70
+                  - type: weight
+                    value: 180
+                  timestamp: '2026-05-27T15:30:00Z'
+      responses:
+        204:
+          description: Vital recorded successfully
+        400:
+          description: Invalid ID or payload supplied
+        404:
+          description: Patient not found
+  /patients/{id}/relationships:
+    get:
+      tags:
+      - patients
+      summary: List a patient's relationships
+      description: Returns a list of relationships for a patient
+      operationId: listPatientRelationships
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to return relationships for
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PatientRelationship'
+        400:
+          description: Invalid ID supplied
+        404:
+          description: Patient not found
+    post:
+      tags:
+      - patients
+      summary: Create a new patient relationship
+      description: Creates a new relationship between two patients
+      operationId: createPatientRelationship
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to create a relationship for
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - personId
+              - type
+              properties:
+                personId:
+                  type: string
+                  description: ID of the person to create a relationship with (patient or contact)
+                type:
+                  type: string
+                  description: The type of relationship
+                isEmergencyContact:
+                  type: boolean
+                isGuarantor:
+                  type: boolean
+                isGuardian:
+                  type: boolean
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientRelationship'
+        400:
+          description: Invalid payload supplied
+  /patients/{id}/relationships/{relationshipId}:
+    patch:
+      tags:
+      - patients
+      summary: Update a patient relationship
+      description: 'Update a single patient relationship. Returns the updated relationship.
+
+        Omitting a top-level field in the request body will leave it unchanged.
+
+        '
+      operationId: patchPatientRelationship
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to update a relationship for
+        required: true
+        schema:
+          type: string
+      - name: relationshipId
+        in: path
+        description: ID of relationship to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The type of relationship
+                isEmergencyContact:
+                  type: boolean
+                isGuarantor:
+                  type: boolean
+                isGuardian:
+                  type: boolean
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientRelationship'
+        400:
+          description: Invalid ID or payload supplied
+        404:
+          description: Relationship not found
+    delete:
+      tags:
+      - patients
+      summary: Delete a patient relationship
+      description: Deletes a patient relationship by ID
+      operationId: deletePatientRelationship
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient to delete a relationship for
+        required: true
+        schema:
+          type: string
+      - name: relationshipId
+        in: path
+        description: ID of relationship to delete
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+  /patients/{id}/attachments:
+    post:
+      tags:
+      - patients
+      summary: Attach a document to a patient chart
+      description: Uploads a file to Ritten and then attaches it as a document on the patient chart which lives under the Attachments section in the Platform
+      operationId: attachDocument
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              - title
+              - type
+              properties:
+                type:
+                  description: The Ritten document type. This can also include any custom types defined by the clinic.
+                  $ref: '#/components/schemas/DocumentTypeEnum'
+                title:
+                  type: string
+                  description: The display title of the document
+                file:
+                  type: string
+                  description: The file upload
+                  format: binary
+        required: true
+      responses:
+        200:
+          description: success
+  /patients/{id}/attachments/{attachmentId}:
+    patch:
+      tags:
+      - patients
+      summary: Update a document on a patient chart
+      description: Update the title and/or type of an existing document on a patient chart. Omitting a field will leave it unchanged.
+      operationId: updateDocument
+      parameters:
+      - name: id
+        in: path
+        description: ID of patient
+        required: true
+        schema:
+          type: string
+      - name: attachmentId
+        in: path
+        description: ID of attachment to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  description: The Ritten document type. This can also include any custom types defined by the clinic.
+                  $ref: '#/components/schemas/DocumentTypeEnum'
+                title:
+                  type: string
+                  description: The display title of the document
+      responses:
+        200:
+          description: success
+  /patients/external/{externalId}:
+    get:
+      tags:
+      - patients
+      summary: Retrieve a patient by external ID
+      description: Returns a single patient with the given external ID
+      operationId: getPatientByExternalId
+      parameters:
+      - name: externalId
+        in: path
+        description: External ID of patient to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDetail'
+        404:
+          description: Patient not found
+components:
+  schemas:
+    ListPatients:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 100
+        patients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Patient'
+    Insurance:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        payerId:
+          type: string
+          description: The ID of the insurance payer
+          example: 15b57ab4-9247-468e-85db-d86f7897207f
+        orderNumber:
+          type: integer
+        groupNumber:
+          type: string
+        memberIdentifier:
+          type: string
+        rxBIN:
+          type: string
+        rxPCN:
+          type: string
+        rxGroup:
+          type: string
+        startDate:
+          type: string
+        expirationDate:
+          type: string
+        notSubscriber:
+          type: boolean
+        comments:
+          type: string
+        providerPhoneNumber:
+          type: string
+        firstName:
+          type: string
+          description: The first name of the subscriber (if patient is not the subscriber)
+        lastName:
+          type: string
+          description: The last name of the subscriber (if patient is not the subscriber)
+        address:
+          type: string
+          description: The address of the subscriber (if patient is not the subscriber)
+        city:
+          type: string
+          description: The city of the subscriber (if patient is not the subscriber)
+        state:
+          type: string
+          description: The state of the subscriber (if patient is not the subscriber)
+        postalCode:
+          type: string
+          description: The postal code of the subscriber (if patient is not the subscriber)
+        subscriberPhoneNumber:
+          type: string
+          description: The phone number of the subscriber (if patient is not the subscriber)
+        birthDate:
+          type: string
+          description: The birth date of the subscriber (if patient is not the subscriber)
+          example: '1990-02-23'
+        sex:
+          type: string
+          description: The sex of the subscriber (if patient is not the subscriber)
+        relationship:
+          description: The relationship of the subscriber to the patient
+          $ref: '#/components/schemas/InsuranceRelationshipTypeEnum'
+    PostPatientVitalMeasurement:
+      type: object
+      additionalProperties: false
+      required:
+      - value
+      properties:
+        type:
+          type: string
+          description: 'Measurement type. Optional for single-measurement vitals, where omitted values default to
+
+            `standard`. Required for composite measurements: `blood_pressure` must include `systolic`
+
+            and `diastolic`, and `height_weight` must use `height` or `weight`. Structural validation is
+
+            enforced server-side.
+
+            Expected units: `standard` temperature = °F, heart_rate and respiration_rate = bpm,
+
+            oxygen_saturation and blood_alcohol_concentration = %, glucose = mg/dL,
+
+            systolic/diastolic = mmHg, height = in, weight = lbs.
+
+            '
+          enum:
+          - standard
+          - systolic
+          - diastolic
+          - height
+          - weight
+          example: standard
+        value:
+          type: number
+          format: double
+          description: Numeric measurement value in the documented unit for this observation and measurement type.
+          example: 72
+    InsuranceRelationshipTypeEnum:
+      type: string
+      enum:
+      - The Beneficiary is a child of the Subscriber
+      - Parent
+      - Spouse
+      - Common-Law Spouse
+      - Other
+      - Self
+      - Injured Party
+    PatientRelationship:
+      allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+            example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+      - $ref: '#/components/schemas/ContactRelationship'
+      - type: object
+        properties:
+          isEmergencyContact:
+            type: boolean
+          isGuarantor:
+            type: boolean
+          isGuardian:
+            type: boolean
+    PatientDetail:
+      allOf:
+      - $ref: '#/components/schemas/Patient'
+      - type: object
+        properties:
+          addresses:
+            type: array
+            items:
+              $ref: '#/components/schemas/Address'
+          diagnoses:
+            type: array
+            items:
+              type: object
+              properties:
+                diagnosis:
+                  type: string
+                isPrimary:
+                  type: boolean
+          demographics:
+            $ref: '#/components/schemas/PatientDemographics'
+          referrals:
+            type: array
+            items:
+              $ref: '#/components/schemas/Referral'
+          insurance:
+            type: array
+            items:
+              $ref: '#/components/schemas/Insurance'
+    PatientProgram:
+      type: object
+      properties:
+        id:
+          type: string
+        program:
+          type: object
+          properties:
+            id:
+              type: string
+            programName:
+              type: string
+            programType:
+              type: string
+              enum:
+              - Clinical
+              - Non-Clinical
+        levelOfCare:
+          type: string
+        admitDate:
+          type: string
+        admittedByUserId:
+          type: string
+        estimatedDischargeDate:
+          type: string
+        dischargeTypeId:
+          type: string
+        dischargeDate:
+          type: string
+        transferredFrom:
+          type: string
+        transferredTo:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        externalId:
+          type: string
+          description: An external identifier for the patient (e.g. an ID from a third-party system)
+        dob:
+          type: string
+          description: date of birth
+        createdAt:
+          type: string
+          format: date-time
+          description: Patient record creation timestamp.
+          example: '2024-01-01T00:00:00Z'
+        mrn:
+          type: string
+          description: Ritten Medical Record Number
+        name:
+          $ref: '#/components/schemas/PatientName'
+        programStatus:
+          type: string
+          enum:
+          - prospective
+          - active
+        latestClinicalProgram:
+          $ref: '#/components/schemas/PatientProgram'
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientProgram'
+        latestClinicalDischarge:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            dischargeType:
+              type: string
+        careTeam:
+          type: object
+          properties:
+            id:
+              type: string
+            primaryClinicianId:
+              type: string
+            teamUserIds:
+              type: array
+              items:
+                type: string
+            primaryClinician:
+              $ref: '#/components/schemas/User'
+        phones:
+          type: array
+          description: Flattened phone contact point values. Primary phone numbers appear first when known; remaining values are ordered newest-first.
+          items:
+            type: string
+            example: '+15555555555'
+        emails:
+          type: array
+          description: Flattened email contact point values. Primary email addresses appear first when known; remaining values are ordered newest-first.
+          items:
+            type: string
+            example: john@example.com
+    IDSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        use:
+          type: string
+          enum:
+          - HOME
+          - WORK
+          - OTHER
+        country:
+          type: string
+          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
+        line:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+          description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
+        postalCode:
+          type: string
+    DocumentTypeEnum:
+      type: string
+      enum:
+      - Pre-Admission
+      - Lab/Toxicology Results
+      - Nursing Shift Notes
+      - Release of Information
+      - Consent
+      - Waiver
+      - Policy and Procedure
+      - Homework
+      - Medical Record
+      - Insurance Card
+      - Client Photo
+      - Other
+      - Prescriptions
+      - Consults
+      - Psych Testing
+      - Correspondence
+      - Intake
+      - Authorization
+    PostPatientVital:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - measurements
+      - timestamp
+      properties:
+        type:
+          type: string
+          description: 'Vital observation type. `height_weight` accepts either a height measurement, a weight measurement,
+
+            or both in one observation for compatibility with Ritten''s internal biometrics model.
+
+            '
+          enum:
+          - temperature
+          - heart_rate
+          - respiration_rate
+          - oxygen_saturation
+          - blood_pressure
+          - glucose
+          - blood_alcohol_concentration
+          - height_weight
+          example: heart_rate
+        measurements:
+          type: array
+          minItems: 1
+          maxItems: 2
+          description: 'Measurements for the observation. Omit `type` only when the observation has a single standard
+
+            measurement. `blood_pressure` requires one `systolic` and one `diastolic` measurement.
+
+            `height_weight` supports `height`, `weight`, or both. The maximum of 2 measurements covers
+
+            composite observations such as blood pressure and height/weight.
+
+            '
+          items:
+            $ref: '#/components/schemas/PostPatientVitalMeasurement'
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the vital was recorded.
+          example: '2026-05-27T15:30:00Z'
+    PatientDemographics:
+      type: object
+      properties:
+        race:
+          type: array
+          items:
+            type: string
+            enum:
+            - American Indian or Alaska Native
+            - Asian
+            - Black or African American
+            - Native Hawaiian or Other Pacific Islander
+            - White
+            - Decline to Specify
+        raceOther:
+          type: array
+          items:
+            type: string
+        ethnicity:
+          type: array
+          items:
+            type: string
+            enum:
+            - Hispanic or Latino
+            - Not Hispanic or Latino
+            - Decline to Specify
+        ethnicityOther:
+          type: array
+          items:
+            type: string
+        preferredLanguage:
+          type: string
+        sex:
+          type: string
+          enum:
+          - Male
+          - Female
+          - Unknown
+        gender:
+          type: array
+          items:
+            type: string
+            enum:
+            - Male
+            - Female
+            - Transgender male
+            - Transgender female
+            - Genderqueer, neither exclusively male nor female
+            - Decline to answer
+            - Additional gender category, please specify.
+        genderDetail:
+          type: string
+        sexualOrientation:
+          type: string
+          enum:
+          - Straight or heterosexual
+          - Lesbian, gay, or homosexual
+          - Bisexual
+          - Something else (please describe below)
+          - Don’t know
+          - Decline to Specify
+        sexualOrientationDetail:
+          type: string
+        maritalStatus:
+          type: string
+          enum:
+          - Married
+          - Unmarried
+          - Unknown
+    ContactRelationship:
+      type: object
+      properties:
+        personId:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        type:
+          type: string
+          description: The type of relationship
+    PatientName:
+      type: object
+      properties:
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        pronouns:
+          type: string
+          example: he/him
+        chosenName:
+          type: string
+          example: Johnny
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        referralTypeId:
+          type: string
+          description: The organization type ID of the referring organization
+          example: 15b57ab4-9247-468e-85db-d86f7897207f
+        organizationId:
+          type: string
+          description: The ID of the referring organization
+          example: 66c2350d-a532-4d19-b063-24570269ef50
+        personId:
+          type: string
+          description: The ID of the person who referred the patient
+          example: e330e20b-b075-48c2-9432-c66a75c5d436
+        isPrimary:
+          type: boolean

@@ -1,0 +1,185 @@
+openapi: 3.2.0
+info:
+  title: External OAUTH API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: oauth
+  description: 'OAuth 2.0 token endpoint for obtaining access tokens. This is the
+
+    recommended way to authenticate with the Ritten External API.
+
+    '
+paths:
+  /oauth/token:
+    post:
+      tags:
+      - oauth
+      summary: Obtain an access token (OAuth 2.0 client_credentials)
+      description: 'Exchanges integrator credentials for a 24-hour access token to use as a `Bearer`
+
+        token on subsequent API calls. This endpoint is **unauthenticated** at the gateway
+
+        layer — your `client_secret` in the request body is the authentication. Ritten
+
+        forwards the credentials to Auth0, validates the response, and caches the resulting
+
+        token server-side so repeated calls do not consume your Auth0 mint quota.
+
+
+        The response shape mirrors the OAuth 2.0 / Auth0 `/oauth/token` response so existing
+
+        OAuth2 client libraries work without modification.
+
+
+        **Mint quota interaction:** the per-app token mint quota (2/hour, 3/day) counts
+
+        mints actually performed against Auth0. Because this endpoint caches server-side,
+
+        repeated calls within a 24-hour window typically result in zero additional Auth0
+
+        mints — so calling here is far cheaper against your quota than calling Auth0
+
+        directly. See the Authentication and Rate Limiting sections above.
+
+        '
+      operationId: postOAuthToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthTokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OAuthTokenRequest'
+      responses:
+        200:
+          description: Access token issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+        400:
+          description: 'Malformed request. The `error` field will be one of `invalid_request`,
+
+            `unsupported_grant_type`, or `invalid_audience`.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthErrorResponse'
+        401:
+          description: 'Auth0 rejected the supplied credentials (`error: invalid_client` or similar).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthErrorResponse'
+        429:
+          description: 'Rate limit exceeded. Either the per-IP request rate limit on this endpoint,
+
+            or the per-app Auth0 mint quota (2/hour, 3/day) has been reached. Retry
+
+            after a short delay. If 429s persist, inspect whether you are hitting
+
+            per-IP request limits vs. triggering fresh Auth0 mints, then reach out
+
+            to Ritten for support.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthErrorResponse'
+        502:
+          description: 'Auth0 was unreachable or returned a 5xx error. Retry — Ritten does not
+
+            cache failed responses.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthErrorResponse'
+components:
+  schemas:
+    OAuthTokenRequest:
+      type: object
+      required:
+      - grant_type
+      - client_id
+      - client_secret
+      - audience
+      properties:
+        grant_type:
+          type: string
+          enum:
+          - client_credentials
+          description: OAuth 2.0 grant type. Must be `client_credentials`.
+          example: client_credentials
+        client_id:
+          type: string
+          description: Your Auth0 M2M client ID.
+        client_secret:
+          type: string
+          format: password
+          writeOnly: true
+          description: Your Auth0 M2M client secret.
+        audience:
+          type: string
+          description: 'The audience for the requested token. Must equal the env-specific
+
+            external-api audience (e.g. `https://external-api.ritten.io` in
+
+            production, `https://external-api.beta.ritten.io` in beta).
+
+            '
+          example: https://external-api.ritten.io
+    OAuthErrorResponse:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          description: 'OAuth 2.0 error code. Common values: `invalid_request`,
+
+            `unsupported_grant_type`, `invalid_audience`, `invalid_client`,
+
+            `bad_gateway`, `rate_limit_exceeded`.
+
+            '
+        error_description:
+          type: string
+          description: Human-readable explanation of the error.
+    OAuthTokenResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      properties:
+        access_token:
+          type: string
+          description: The access token to use as a `Bearer` token on subsequent API calls.
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          format: int64
+          description: Token lifetime in seconds (currently 86400 / 24h).
+          example: 86400
+        scope:
+          type: string
+          description: Space-separated list of granted scopes (may be empty).

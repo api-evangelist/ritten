@@ -1,0 +1,208 @@
+openapi: 3.2.0
+info:
+  title: External Users API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: users
+paths:
+  /staff:
+    get:
+      tags:
+      - users
+      summary: List all clinic staff users
+      description: List all clinic staff users
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /users:
+    post:
+      tags:
+      - users
+      summary: Create a new user
+      description: Creates a new user in the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: The user's first name
+                  example: John
+                lastName:
+                  type: string
+                  description: The user's last name
+                  example: Doe
+                email:
+                  type: string
+                  description: The user's email address
+                  example: john@example.com
+              required:
+              - firstName
+              - lastName
+              - email
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The new user's ID
+                  newUserPassword:
+                    type: string
+                    description: The new user's initial password
+  /users/{id}:
+    delete:
+      tags:
+      - users
+      summary: Delete a user
+      description: Deletes a user by ID
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: ID of user to delete
+      responses:
+        200:
+          description: User deleted successfully
+  /users/{id}/roles:
+    post:
+      tags:
+      - users
+      summary: Assign a role to a user
+      description: Assigns a role to a user by user ID
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: ID of user to assign role to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roleId:
+                  type: string
+                  format: uuid
+                  description: ID of role to assign
+              required:
+              - roleId
+      responses:
+        200:
+          description: Role assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDSchema'
+  /users/{id}/roles/{roleID}:
+    delete:
+      tags:
+      - users
+      summary: Remove a role from a user
+      description: Removes a role from a user by user ID and role ID
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: ID of user to remove role from
+      - name: roleID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: ID of role to remove
+      responses:
+        200:
+          description: Role removed successfully
+  /teams:
+    get:
+      tags:
+      - users
+      summary: List all clinic teams
+      description: Lists all the clinic teams and their users.
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicTeam'
+components:
+  schemas:
+    IDSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+    ClinicTeam:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        name:
+          type: string
+          example: Cool Team
+        userIds:
+          type: array
+          items:
+            type: string
+            example: f87e1b07-1d20-4c36-8c37-08600daf7322
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'

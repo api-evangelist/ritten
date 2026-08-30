@@ -1,0 +1,170 @@
+openapi: 3.2.0
+info:
+  title: External Calendar API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: calendar
+paths:
+  /calendar/events/list:
+    post:
+      tags:
+      - calendar
+      summary: Query calendar events
+      description: Lists all calendar events that match the given query parameters. The POST body is the query object.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - startTime
+              - endTime
+              properties:
+                entityIds:
+                  type: array
+                  items:
+                    type: string
+                    example: f87e1b07-1d20-4c36-8c37-08600daf7322
+                startTime:
+                  type: string
+                  description: ISO Format DateTime
+                  example: '2024-02-13T13:00:00-05:00'
+                endTime:
+                  type: string
+                  description: ISO Format DateTime
+                  example: '2024-02-13T23:59:59-05:00'
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+  /calendar/events:
+    post:
+      tags:
+      - calendar
+      summary: Create a new calendar event
+      description: Create a new calendar event.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CalendarEventCore'
+              - type: object
+                properties:
+                  timezone:
+                    type: string
+                    example: America/New_York
+                  encounterTemplateId:
+                    type:
+                    - string
+                    - 'null'
+                    example: null
+                  reminderInterval:
+                    $ref: '#/components/schemas/CalendarEventInterval'
+                  notifyGuests:
+                    type: boolean
+                  guests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        entityType:
+                          type: string
+                          enum:
+                          - user
+                          - patient
+                          - clinic team
+                          - group
+                          - program
+                          - care team
+                        entityId:
+                          type: string
+                          example: f87e1b07-1d20-4c36-8c37-08600daf7322
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDSchema'
+components:
+  schemas:
+    CalendarEventInterval:
+      type:
+      - string
+      - 'null'
+      enum:
+      - 0m
+      - 15m
+      - 30m
+      - 1h
+      - 24h
+      - 2d
+      - 3d
+    IDSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+    CalendarEvent:
+      allOf:
+      - $ref: '#/components/schemas/CalendarEventCore'
+      - type: object
+        properties:
+          frequency:
+            type: string
+            enum:
+            - day
+            - week
+            - month
+            - yeah
+            - custom
+          interval:
+            $ref: '#/components/schemas/CalendarEventInterval'
+          daysOfWeek:
+            type: array
+            items:
+              type: string
+              enum:
+              - Monday
+              - Tuesday
+              - Wednesday
+              - Thursday
+              - Friday
+              - Saturday
+              - Sunday
+          until:
+            type:
+            - string
+            - 'null'
+            example: '2024-02-13T13:00:00-05:00'
+    CalendarEventCore:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        title:
+          type: string
+          example: Therapy Appointment
+        description:
+          type: string
+        location:
+          type: string
+        startTime:
+          type: string
+          example: '2024-02-13T13:00:00-05:00'
+        endTime:
+          type: string
+          example: '2024-02-13T13:00:00-05:00'

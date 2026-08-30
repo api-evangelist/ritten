@@ -1,0 +1,240 @@
+openapi: 3.2.0
+info:
+  title: External Facilities API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: facilities
+  description: 'Endpoints for accessing clinic facilities (service locations).
+
+    '
+paths:
+  /facilities:
+    get:
+      tags:
+      - facilities
+      summary: List active facilities in a clinic
+      description: Lists active clinic facilities with pagination and optional filters.
+      operationId: listFacilities
+      parameters:
+      - name: createdAfter
+        in: query
+        description: Return facilities created after this timestamp (ISO 8601).
+        schema:
+          type: string
+          format: date-time
+      - name: search
+        in: query
+        description: Case-insensitive search on facility name.
+        schema:
+          type: string
+          maxLength: 255
+      - name: limit
+        in: query
+        description: How many facilities to return at one time (max 20).
+        schema:
+          maximum: 20
+          minimum: 1
+          type: integer
+          format: int64
+          default: 20
+      - name: offset
+        in: query
+        description: How many facilities to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFacilities'
+        400:
+          description: Invalid query parameters
+    post:
+      tags:
+      - facilities
+      summary: Create a facility in a clinic
+      description: Creates a clinic facility. The request must include name, nationalProviderId, phone, and address.
+      operationId: postFacility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostFacilityBody'
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Facility'
+        400:
+          description: Invalid payload supplied
+  /facilities/{id}:
+    patch:
+      tags:
+      - facilities
+      summary: Update a facility
+      description: Updates an active facility.
+      operationId: patchFacility
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Facility ID.
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchFacilityBody'
+      responses:
+        204:
+          description: Facility updated successfully.
+        400:
+          description: Invalid payload supplied
+        404:
+          description: Facility not found
+components:
+  schemas:
+    PatchFacilityBody:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Facility name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+    ListFacilities:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        facilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facility'
+    Facility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        nationalProviderId:
+          type: string
+          description: National Provider Identifier (NPI)
+        phone:
+          type: string
+          description: Primary facility phone number
+          example: '+15555555555'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    PostFacilityAddress:
+      type: object
+      required:
+      - line
+      properties:
+        country:
+          type: string
+          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
+          example: US
+        line:
+          type: string
+          description: Street address line 1.
+          example: 123 Main St
+        line2:
+          type: string
+          description: Street address line 2.
+          example: Suite 100
+        city:
+          type: string
+          example: New York
+        region:
+          type: string
+          description: For US addresses, must be a valid 2-letter US state/territory code or recognizable state name.
+          example: NY
+        postalCode:
+          type: string
+          example: '10001'
+        timezone:
+          type: string
+          description: IANA timezone identifier.
+          example: America/New_York
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        use:
+          type: string
+          enum:
+          - HOME
+          - WORK
+          - OTHER
+        country:
+          type: string
+          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
+        line:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+          description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
+        postalCode:
+          type: string
+    PostFacilityBody:
+      type: object
+      required:
+      - name
+      - nationalProviderId
+      - phone
+      - address
+      properties:
+        name:
+          type: string
+          description: Facility name.
+          example: Ritten Recovery Center
+        nationalProviderId:
+          type: string
+          description: National Provider Identifier (NPI)
+          example: '1234567890'
+        phone:
+          type: string
+          description: Primary facility phone number
+          example: 555-555-5555
+        address:
+          $ref: '#/components/schemas/PostFacilityAddress'

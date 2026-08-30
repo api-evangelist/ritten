@@ -1,0 +1,358 @@
+openapi: 3.2.0
+info:
+  title: External Contacts API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: contacts
+paths:
+  /contacts:
+    get:
+      tags:
+      - contacts
+      summary: List contacts in a clinic
+      description: Lists contacts in a clinic
+      operationId: listContacts
+      parameters:
+      - name: limit
+        in: query
+        description: How many contacts to return at one time (max 20).
+        schema:
+          maximum: 20
+          type: integer
+          format: int64
+      - name: offset
+        in: query
+        description: How many contacts to skip before returning the limit number of contacts. Use this to page.
+        schema:
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContacts'
+    post:
+      tags:
+      - contacts
+      summary: Create a new contact
+      description: Creates a new contact record
+      operationId: createContact
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - first
+              - last
+              properties:
+                first:
+                  type: string
+                  description: The contact's first name
+                  example: John
+                middle:
+                  type: string
+                  description: The contact's middle name
+                last:
+                  type: string
+                  description: The contact's last name
+                  example: Doe
+                dob:
+                  type: string
+                  description: Date of birth (YYYY-MM-DD)
+                  example: '1990-02-23'
+                address:
+                  $ref: '#/components/schemas/Address'
+                contactPoints:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ContactPoint'
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+        400:
+          description: Invalid payload supplied
+  /contacts/{id}:
+    get:
+      tags:
+      - contacts
+      summary: Retrieve a contact by ID
+      description: Returns a single contact
+      operationId: getContactById
+      parameters:
+      - name: id
+        in: path
+        description: ID of contact to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+        400:
+          description: Invalid ID supplied
+        404:
+          description: Contact not found
+    patch:
+      tags:
+      - contacts
+      summary: Update a contact by ID
+      description: 'Update a single contact. Returns the updated contact.
+
+        Omitting a top-level field in the request body will leave it unchanged.
+
+        '
+      operationId: patchContact
+      parameters:
+      - name: id
+        in: path
+        description: ID of contact to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                first:
+                  type: string
+                  description: The contact's first name
+                  example: John
+                middle:
+                  type: string
+                  description: The contact's middle name
+                last:
+                  type: string
+                  description: The contact's last name
+                  example: Doe
+                dob:
+                  type: string
+                  description: Date of birth (YYYY-MM-DD)
+                  example: '1990-02-23'
+                address:
+                  $ref: '#/components/schemas/Address'
+                contactPoints:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ContactPoint'
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+        400:
+          description: Invalid ID or payload supplied
+        404:
+          description: Contact not found
+  /contacts/{id}/relationships:
+    get:
+      tags:
+      - contacts
+      summary: List a contact's relationships
+      description: Returns a list of relationships for a contact
+      operationId: listContactRelationships
+      parameters:
+      - name: id
+        in: path
+        description: ID of contact to return relationships for
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContactRelationship'
+        400:
+          description: Invalid ID supplied
+        404:
+          description: Contact not found
+    post:
+      tags:
+      - contacts
+      summary: Create a new contact relationship
+      description: Creates a new relationship between two contacts
+      operationId: createContactRelationship
+      parameters:
+      - name: id
+        in: path
+        description: ID of contact to create a relationship for
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - personId
+              - type
+              properties:
+                personId:
+                  type: string
+                  description: ID of the person to create a relationship with (patient or contact)
+                type:
+                  type: string
+                  description: The type of relationship
+      responses:
+        200:
+          description: success
+        400:
+          description: Invalid payload supplied
+components:
+  schemas:
+    ContactPoint:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        system:
+          type: string
+          enum:
+          - PHONE
+          - EMAIL
+          - FAX
+        use:
+          type: string
+          enum:
+          - HOME
+          - WORK
+          - MOBILE
+          - PERSONAL
+        value:
+          type: string
+        valueExt:
+          type: string
+          description: Extension for phone numbers
+        isPrimary:
+          type: boolean
+        notes:
+          type: string
+    ContactDetail:
+      allOf:
+      - $ref: '#/components/schemas/Contact'
+      - type: object
+        properties:
+          contactPoints:
+            type: array
+            items:
+              $ref: '#/components/schemas/ContactPoint'
+          address:
+            $ref: '#/components/schemas/Address'
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        first:
+          type: string
+          example: John
+        middle:
+          type: string
+        last:
+          type: string
+          example: Doe
+        dob:
+          type: string
+          description: Date of birth
+          example: '1990-02-23'
+        mrn:
+          type: string
+          description: Ritten Medical Record Number (if applicable)
+        email:
+          type: string
+          description: The contact's primary email address. Falls back to their most recently added email when none is marked primary, and is omitted when they have none.
+          example: john@example.com
+        createdAt:
+          type: string
+          format: date-time
+          description: Contact record creation timestamp.
+          example: '2024-01-01T00:00:00Z'
+        organizations:
+          type: array
+          description: Organizations this contact is associated with. Omitted when they belong to none.
+          items:
+            $ref: '#/components/schemas/ContactOrganization'
+    ContactOrganization:
+      type: object
+      description: An organization a contact is associated with.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The organization's ID. Pass to GET /organizations/{id} for the full record.
+          example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        name:
+          type: string
+          example: Sunrise Recovery Center
+        relationshipType:
+          type: string
+          description: How the contact relates to the organization. Omitted when unset.
+          example: member
+        isPrimary:
+          type: boolean
+          description: Whether this is the contact's primary organization.
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        use:
+          type: string
+          enum:
+          - HOME
+          - WORK
+          - OTHER
+        country:
+          type: string
+          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
+        line:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+          description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
+        postalCode:
+          type: string
+    ListContacts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Contact'
+    ContactRelationship:
+      type: object
+      properties:
+        personId:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        type:
+          type: string
+          description: The type of relationship

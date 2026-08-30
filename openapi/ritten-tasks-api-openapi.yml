@@ -1,0 +1,382 @@
+openapi: 3.2.0
+info:
+  title: External Tasks API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: tasks
+  description: 'Endpoints for accessing clinic tasks. Tasks linked to a client are only returned when the integration is authorized to read that client.
+
+    '
+paths:
+  /tasks:
+    get:
+      tags:
+      - tasks
+      summary: List tasks in a clinic
+      description: 'Lists tasks with pagination and optional filters. Tasks linked to a client are only
+
+        returned when the integration is authorized to read that client; unauthorized tasks
+
+        are excluded from both the results and `meta.totalCount`.
+
+
+        `title` and `description` are unstructured clinical free text and may contain PHI.
+
+        '
+      operationId: listTasks
+      parameters:
+      - name: assigneeIds
+        in: query
+        description: Filter by one or more assignee user IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: creatorIds
+        in: query
+        description: Filter by one or more creator user IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: patientIds
+        in: query
+        description: Filter by one or more linked client IDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        style: form
+        explode: true
+      - name: statuses
+        in: query
+        description: Filter by one or more task statuses.
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatus'
+        style: form
+        explode: true
+      - name: priorities
+        in: query
+        description: Filter by one or more task priorities.
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskPriority'
+        style: form
+        explode: true
+      - name: dueStartDate
+        in: query
+        description: Only return tasks due on or after this date. Tasks with no due date are excluded when either due date filter is set.
+        schema:
+          type: string
+          format: date
+          example: '2024-01-01'
+      - name: dueEndDate
+        in: query
+        description: Only return tasks due on or before this date.
+        schema:
+          type: string
+          format: date
+          example: '2024-01-31'
+      - name: createdStartTime
+        in: query
+        description: Only return tasks created at or after this ISO 8601 timestamp.
+        schema:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      - name: createdEndTime
+        in: query
+        description: Only return tasks created at or before this ISO 8601 timestamp.
+        schema:
+          type: string
+          format: date-time
+          example: '2024-01-31T23:59:59Z'
+      - name: sort
+        in: query
+        description: How to order the results. Defaults to newest created first.
+        schema:
+          type: string
+          enum:
+          - activity_newest
+          - activity_oldest
+          - created_newest
+          - created_oldest
+          - due_latest
+          - due_earliest
+          - priority_highest
+          - priority_lowest
+          - client_az
+          - client_za
+      - name: limit
+        in: query
+        description: How many tasks to return at one time (max 20).
+        schema:
+          maximum: 20
+          minimum: 1
+          type: integer
+          format: int64
+          default: 20
+      - name: offset
+        in: query
+        description: How many tasks to skip before returning results. Use for pagination.
+        schema:
+          minimum: 0
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTasks'
+        400:
+          description: Invalid query parameters
+    post:
+      tags:
+      - tasks
+      summary: Create a task
+      description: 'Creates a task assigned to a staff member. The server assigns the id, timestamps and
+
+        the creator; `status` defaults to `New` and `priority` to `Medium`.
+
+
+        The assignee is notified exactly as they would be for a task created in the app.
+
+        Requests are not idempotent: retrying a successful call creates a second task.
+
+        '
+      operationId: postTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostTaskBody'
+      responses:
+        200:
+          description: Task created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        400:
+          description: Invalid payload supplied
+        404:
+          description: No staff user found for the supplied assigneeId
+  /tasks/{id}:
+    patch:
+      tags:
+      - tasks
+      summary: Update a task
+      description: 'Applies a partial update to an existing task. Only the fields you send are changed;
+
+        everything else on the task is left as it is.
+
+
+        Setting `description` replaces any rich text the task carries, so the text you send
+
+        is what staff see in the app.
+
+        '
+      operationId: patchTask
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the task to update.
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTaskBody'
+      responses:
+        200:
+          description: Task updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        400:
+          description: Invalid payload supplied, or no fields set
+        404:
+          description: Task not found, or no staff user found for the supplied assigneeId
+components:
+  schemas:
+    TaskStatus:
+      type: string
+      enum:
+      - New
+      - Working
+      - Complete
+      - Won't Do
+    TaskPriority:
+      type: string
+      enum:
+      - Low
+      - Medium
+      - High
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        title:
+          type: string
+          example: Call the pharmacy
+        description:
+          type: string
+          example: Confirm the refill went through.
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        assigneeId:
+          description: The user the task is assigned to, or null if unassigned.
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        createdById:
+          description: The user who created the task, or null if it was created by an automation.
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        patientId:
+          description: The client the task is linked to, or null if it is not client-linked.
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        dueDate:
+          description: The date the task is due, or null if it has no due date.
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          example: '2024-01-31'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          description: When the task was last updated, or null if it has never been updated.
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          example: '2024-01-02T00:00:00Z'
+        statusUpdatedAt:
+          description: When the task's status last changed, or null if it has never changed.
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          example: '2024-01-02T00:00:00Z'
+    ListTasks:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    PatchTaskBody:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'External partial update contract for tasks. Only the fields present in the request are
+
+        changed; omitted fields keep their stored value. At least one field must be set.
+
+        '
+      example:
+        status: Complete
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Unstructured clinical free text; may contain PHI. Replaces any rich text the task carries.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due. Send an empty string to clear an existing due date.
+          example: '2024-01-31'
+    PostTaskBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract for tasks. The server assigns the id, timestamps and creator.
+
+        '
+      required:
+      - title
+      - assigneeId
+      example:
+        title: Call the pharmacy
+        assigneeId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        priority: High
+        dueDate: '2024-01-31'
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Optional detail. Unstructured clinical free text; may contain PHI. Markdown is rendered.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due.
+          example: '2024-01-31'

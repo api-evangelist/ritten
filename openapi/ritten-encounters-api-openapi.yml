@@ -1,0 +1,181 @@
+openapi: 3.2.0
+info:
+  title: External Encounters API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: encounters
+  description: 'Endpoints for creating clinical encounters (visits) and discovering the
+
+    encounter types they are created from.
+
+    '
+paths:
+  /encounters:
+    post:
+      tags:
+      - encounters
+      summary: Create an encounter
+      description: 'Creates a new, empty encounter (visit) on a patient''s chart from an encounter
+
+        type. Use `GET /encounter-types` to discover the available types. The
+
+        encounter starts at server time with no documentation; forms are attached
+
+        separately via `POST /patients/{id}/forms`.
+
+
+        The new encounter behaves exactly like one created in-app: forms and documents
+
+        configured on the encounter type are seeded onto it, and billing artifacts are
+
+        generated asynchronously for billable types. Requests are not idempotent:
+
+        retrying a successful call creates a second encounter.
+
+        '
+      operationId: postEncounter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEncounterBody'
+      responses:
+        200:
+          description: Encounter created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+        400:
+          description: Invalid payload supplied
+        404:
+          description: Patient or encounter type not found (archived encounter types are treated as not found)
+  /encounter-types:
+    get:
+      tags:
+      - encounters
+      summary: List encounter types
+      description: 'Lists the clinic''s active encounter types — the configured visit types that
+
+        encounters are created from. Archived encounter types are never returned by
+
+        the external API.
+
+        '
+      operationId: listEncounterTypes
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EncounterType'
+components:
+  schemas:
+    AttendanceType:
+      type: string
+      description: Attendance status of an encounter. Defaults to Attended when omitted at creation.
+      enum:
+      - Attended
+      - AttendedNotBillable
+      - AbsentExcused
+      - AbsentNotExcused
+      - AbsentUnknown
+      - AbsentBillable
+    PostEncounterBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract for encounters. The server assigns the encounter ID and start time on create.
+
+        '
+      required:
+      - patientId
+      - encounterTypeId
+      example:
+        patientId: d3f2c9a1-8b47-4e0f-a2c9-53f7f0c1b2aa
+        encounterTypeId: 0b6a1f6e-2f9a-4c56-9d1c-6a3f6f9d2e11
+        attendanceType: Attended
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          description: ID of the patient to create the encounter for.
+        encounterTypeId:
+          type: string
+          format: uuid
+          description: ID of the encounter type to create the encounter from. Use `GET /encounter-types` to discover types.
+        attendanceType:
+          $ref: '#/components/schemas/AttendanceType'
+    EncounterType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Display name of the encounter type.
+          example: Individual Therapy
+        description:
+          type: string
+        isBillable:
+          type: boolean
+          description: Whether encounters of this type generate billing artifacts.
+        isGroup:
+          type: boolean
+          description: Whether this type is used for group encounters.
+        durationMinutes:
+          anyOf:
+          - type: integer
+            format: int64
+          - type: 'null'
+          description: Default duration in minutes, when configured.
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    Encounter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        encounterTypeId:
+          type: string
+          format: uuid
+          description: ID of the encounter type the encounter was created from.
+        name:
+          type: string
+          description: Display name of the encounter type.
+          example: Individual Therapy
+        status:
+          type: string
+          description: Documentation status of the encounter. New encounters always start Empty.
+          enum:
+          - Empty
+          - Incomplete
+          - Complete
+        startTime:
+          type: string
+          format: date-time
+          description: Start time of the encounter (server time at creation).
+          example: '2024-01-01T00:00:00Z'
+        attendanceType:
+          $ref: '#/components/schemas/AttendanceType'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'

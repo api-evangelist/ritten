@@ -1,0 +1,200 @@
+openapi: 3.2.0
+info:
+  title: External Webhooks API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: webhooks
+  description: "Ritten provides webhooks for various events that occur in the system.\nIntegrating partners can subscribe to these events to receive real-time updates.\n\nWebhooks sent from Ritten are POST requests with a JSON body containing the event `type` and associated `data`.\nThe schema for the `data` object will vary depending on the event type.\n```\n{\n  \"type\": \"patient.admit\",\n  \"data\": {\n    \"patientId\": \"182c2e54-3494-4b85-aba5-038cf539d5bf\",\n    \"programId\": \"9a5e64b0-0a73-4cb5-ab32-44fea16da4e1\"\n  }\n}\n```\n"
+paths: {}
+webhooks:
+  patient.admit:
+    post:
+      tags:
+      - webhooks
+      description: A patient has been admitted to a clinic program
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: patient.admit
+                data:
+                  type: object
+                  properties:
+                    patientId:
+                      type: string
+                      description: The ID of the patient
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    programId:
+                      type: string
+                      description: The ID of the program the patient was admitted to
+                      example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully
+  patient.transfer:
+    post:
+      tags:
+      - webhooks
+      description: A patient has been transferred from one program to another
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: patient.transfer
+                data:
+                  type: object
+                  properties:
+                    patientId:
+                      type: string
+                      description: The ID of the patient
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    fromProgramId:
+                      type: string
+                      description: The ID of the program the patient was transferred from
+                      example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+                    toProgramId:
+                      type: string
+                      description: The ID of the program the patient was transferred to
+                      example: 1eddacc4-26b1-4e65-bf34-897e3be577c1
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully
+  patient.discharge:
+    post:
+      tags:
+      - webhooks
+      description: A patient has been discharged from a clinic program
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: patient.discharge
+                data:
+                  type: object
+                  properties:
+                    patientId:
+                      type: string
+                      description: The ID of the patient
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    programId:
+                      type: string
+                      description: The ID of the program the patient was discharged from
+                      example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully
+  case.status.update:
+    post:
+      tags:
+      - webhooks
+      description: The status of a case has been updated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: case.status.update
+                data:
+                  type: object
+                  properties:
+                    caseId:
+                      type: string
+                      description: The ID of the case
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    personSeekingTreatmentId:
+                      type: string
+                      description: The ID of the person seeking treatment. Can be empty if there is no person seeking treatment associated with the case.
+                      example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+                    fromStatus:
+                      type: string
+                      description: The previous status of the case
+                      example: New
+                    toStatus:
+                      type: string
+                      description: The new status of the case
+                      example: Qualified
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully
+  case.created:
+    post:
+      tags:
+      - webhooks
+      description: A new case has been created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: case.created
+                data:
+                  type: object
+                  properties:
+                    caseId:
+                      type: string
+                      description: The ID of the case
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    personSeekingTreatmentId:
+                      type: string
+                      description: The ID of the person seeking treatment. Can be empty if there is no person seeking treatment associated with the case.
+                      example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+                    status:
+                      type: string
+                      description: The status of the case
+                      example: New
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully
+  patient.created:
+    post:
+      tags:
+      - webhooks
+      description: A new patient has been created (MRN generated)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: The event type
+                  example: patient.created
+                data:
+                  type: object
+                  properties:
+                    patientId:
+                      type: string
+                      description: The ID of the patient
+                      example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+                    mrn:
+                      type: string
+                      description: The medical record number assigned to the patient
+                      example: D31EBE
+      responses:
+        200:
+          description: 200 status indicates that the data was received successfully

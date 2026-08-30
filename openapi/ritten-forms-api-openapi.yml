@@ -1,0 +1,354 @@
+openapi: 3.2.0
+info:
+  title: External Forms API
+  x-logo:
+    url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
+    backgroundColor: '#FFFFFF'
+    altText: Ritten Logo
+  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  version: 1.0.0
+servers:
+- url: https://api.ritten.io/v1
+tags:
+- name: forms
+  description: 'Endpoints for accessing form definitions and form-related data.
+
+    '
+paths:
+  /patients/{id}/forms:
+    post:
+      tags:
+      - forms
+      summary: Create a form on a patient chart and submit field values
+      description: 'Creates a form instance from a pre-configured form definition (resolved by its label) on the
+
+        patient''s chart and writes all provided field values in a single atomic call — on any error,
+
+        nothing is written. Use `GET /forms/definitions` to discover form, section, and field labels.
+
+
+        Every ingested form attaches to an existing encounter (visit) on the patient''s chart: create
+
+        the encounter first, then submit form data with its `encounterId`. The encounter must belong
+
+        to the patient.
+
+
+        Values are keyed by field definition label and must match the field''s type: strings for
+
+        `text` and `text_paragraph`, `YYYY-MM-DD` or RFC 3339 strings for `date`, numbers for
+
+        `number_float`, a configured choice string for single-choice fields (scale answers are string
+
+        integers, e.g. `"2"`), and arrays of choice strings for multi-choice fields. Grid-matrix
+
+        values are row-keyed objects whose per-row shape depends on the sub-type: `grid_matrix_text`
+
+        and `grid_matrix_number` map each row index to a column-keyed object of cells
+
+        (`{"0": {"1": "cell"}}`), `grid_matrix_choice` maps each row index to a single integer column
+
+        index (`{"0": 1}`), and `grid_matrix_multi_choice` maps each row index to an array of integer
+
+        column indices (`{"0": [0, 1]}`). A JSON `null` clears a field (including any default).
+
+        Display-only, calculated, and chart-backed (`roobi_custom_field`) fields cannot be written.
+
+        Omit `values` to create an empty form.
+
+
+        Submitted field labels must be unambiguous within the form definition: if a label matches more
+
+        than one field on the created form, the request fails with a 400.
+
+
+        The created form behaves exactly like one created on the encounter in-app: it arrives
+
+        unsigned with the definition''s signature requirements and signature actions, signers are
+
+        notified, due-forms scheduling applies, and the encounter''s documentation status is
+
+        recalculated. Requests are not idempotent: retrying a successful call creates a second form
+
+        instance.
+
+        '
+      operationId: postPatientForm
+      parameters:
+      - name: id
+        in: path
+        description: ID of the patient to create the form for
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPatientForm'
+            examples:
+              phq9:
+                summary: Submit a PHQ-9 assessment
+                value:
+                  formDefinitionLabel: phq9_intake_form
+                  encounterId: 6a6f8ab1-38b0-4c96-9f39-2a37e2f4a111
+                  values:
+                    roobi_depression_phq9_q1: '2'
+                    roobi_depression_phq9_q2: '3'
+                    reason_for_visit: referral
+              empty_form:
+                summary: Create an empty form (no values)
+                value:
+                  formDefinitionLabel: weekly_progress_note
+                  encounterId: 6a6f8ab1-38b0-4c96-9f39-2a37e2f4a111
+      responses:
+        200:
+          description: Form created and all values written
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientForm'
+        400:
+          description: Invalid payload — unknown or ambiguous field label, value invalid for the field's type, or unsupported form definition
+        404:
+          description: Patient, form definition label, or encounter not found
+  /forms/definitions:
+    get:
+      tags:
+      - forms
+      summary: List form definitions
+      description: Returns all form definitions configured for the clinic, including section definitions and signature requirements
+      operationId: listFormDefinitions
+      parameters:
+      - name: showArchived
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include archived form definitions
+      - name: isTxPlan
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Filter to only treatment plan forms
+      - name: fieldDefinitionIds[]
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Filter by specific field definition IDs
+        style: form
+        explode: true
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormDefinition'
+        401:
+          description: Unauthorized
+components:
+  schemas:
+    FormDefinitionSignatureRequirement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        formDefinitionId:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Roles that can fulfill this signature requirement
+    PatientFormField:
+      type: object
+      properties:
+        fieldLabel:
+          type: string
+          example: roobi_depression_phq9_q1
+        title:
+          type: string
+          description: The field's prompt text.
+        type:
+          type: string
+          description: The field's type (e.g. text, date, single_choice_scale, grid_matrix_text).
+          example: single_choice_scale
+        value:
+          description: The field's stored value; null when unset.
+    PatientFormSection:
+      type: object
+      properties:
+        sectionLabel:
+          type: string
+          example: roobi_depression_phq9
+        title:
+          type: string
+          example: PHQ-9
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientFormField'
+    FormDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+          description: Internal label for the form
+        title:
+          type: string
+          description: Display title of the form
+        description:
+          type: string
+        instructions:
+          type: object
+          properties:
+            plainText:
+              type: string
+            richText:
+              type: string
+          description: Form instructions in plain text and rich text formats
+        isPatientEligible:
+          type: boolean
+          description: Whether patients can fill out this form
+        isTxPlanForm:
+          type: boolean
+          description: Whether this is a treatment plan form
+        txPlanCategoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Treatment plan category ID if applicable
+        newFormNeededInXDays:
+          type: integer
+          description: Number of days after which a new form instance is needed
+        archiveDueFormsOnDischarge:
+          type: boolean
+          description: Whether to archive due forms when patient is discharged
+        sectionDefinitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionDefinition'
+        signatureRequirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormDefinitionSignatureRequirement'
+    PostPatientForm:
+      type: object
+      additionalProperties: false
+      required:
+      - formDefinitionLabel
+      - encounterId
+      properties:
+        formDefinitionLabel:
+          type: string
+          description: Label of the form definition to instantiate. Discover labels via `GET /forms/definitions`.
+          example: phq9_intake_form
+        encounterId:
+          type: string
+          format: uuid
+          description: 'Encounter (visit) to attach the form to. The encounter must already exist and belong to
+
+            the patient — create the encounter before submitting form data.
+
+            '
+        values:
+          type: object
+          additionalProperties: true
+          description: 'Flat map of field definition label to value. Value shapes are field-type specific (see the
+
+            endpoint description). A JSON null clears the field. Omit to create an empty form.
+
+            '
+          example:
+            roobi_depression_phq9_q1: '2'
+            reason_for_visit: referral
+    PatientForm:
+      type: object
+      properties:
+        formInstanceId:
+          type: string
+          format: uuid
+        formDefinitionLabel:
+          type: string
+          example: phq9_intake_form
+        patientId:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter the form is attached to.
+        createdAt:
+          type: string
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientFormSection'
+    FieldDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        fieldType:
+          type: string
+          description: Type of field (e.g., text, number, date, select)
+        sortOrder:
+          type: integer
+        isRequired:
+          type: boolean
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+          description: Options for select/radio/checkbox fields
+    SectionDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        sortOrder:
+          type: integer
+        fieldDefinitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDefinition'
