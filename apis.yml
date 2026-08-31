@@ -96,6 +96,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Calendar
+  tags_raw:
   - calendar
   properties:
   - type: OpenAPI
@@ -126,6 +128,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Cases
+  tags_raw:
   - cases
   properties:
   - type: OpenAPI
@@ -156,6 +160,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Contacts
+  tags_raw:
   - contacts
   properties:
   - type: OpenAPI
@@ -189,6 +195,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Encounters
+  tags_raw:
   - encounters
   properties:
   - type: OpenAPI
@@ -219,6 +227,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Facilities
+  tags_raw:
   - facilities
   properties:
   - type: OpenAPI
@@ -249,6 +259,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Forms
+  tags_raw:
   - forms
   properties:
   - type: OpenAPI
@@ -285,6 +297,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Insights
+  tags_raw:
   - insights
   properties:
   - type: OpenAPI
@@ -315,6 +329,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Insurance
+  tags_raw:
   - insurance
   properties:
   - type: OpenAPI
@@ -348,6 +364,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Authentication
+  tags_raw:
   - oauth
   properties:
   - type: OpenAPI
@@ -381,6 +399,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Organization
+  tags_raw:
   - organizations
   properties:
   - type: OpenAPI
@@ -411,6 +431,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Patients
+  tags_raw:
   - patients
   properties:
   - type: OpenAPI
@@ -441,6 +463,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Programs
+  tags_raw:
   - programs
   properties:
   - type: OpenAPI
@@ -473,6 +497,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Task
+  tags_raw:
   - tasks
   properties:
   - type: OpenAPI
@@ -503,6 +529,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - User
+  tags_raw:
   - users
   properties:
   - type: OpenAPI
@@ -554,6 +582,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Webhook
+  tags_raw:
   - webhooks
   properties:
   - type: OpenAPI
