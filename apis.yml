@@ -355,41 +355,6 @@ apis:
     url: lifecycle/ritten-lifecycle.yml
   - type: Sandbox
     url: sandbox/ritten-sandbox.yml
-- aid: ritten:ritten-oauth-api
-  name: Ritten OAUTH API
-  description: >-
-    OAuth 2.0 token endpoint for obtaining access tokens. This is the
-
-    recommended way to authenticate with the Ritten External API.
-  humanURL: https://docs.ritten.io/
-  baseURL: https://api.ritten.io/v1
-  tags:
-  - Authentication
-  tags_raw:
-  - oauth
-  properties:
-  - type: OpenAPI
-    url: openapi/ritten-oauth-api-openapi.yml
-  - type: Documentation
-    url: https://docs.ritten.io/
-  - type: APIReference
-    url: https://docs.ritten.io/
-  - type: Authentication
-    url: authentication/ritten-authentication.yml
-  - type: Conventions
-    url: conventions/ritten-conventions.yml
-  - type: ErrorCatalog
-    url: errors/ritten-problem-types.yml
-  - type: RateLimits
-    url: rate-limits/ritten-rate-limits.yml
-  - type: Webhooks
-    url: asyncapi/ritten-webhooks.yml
-  - type: DataModel
-    url: data-model/ritten-data-model.yml
-  - type: Lifecycle
-    url: lifecycle/ritten-lifecycle.yml
-  - type: Sandbox
-    url: sandbox/ritten-sandbox.yml
 - aid: ritten:ritten-organizations-api
   name: Ritten Organizations API
   description: >-
@@ -588,6 +553,39 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/ritten-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.ritten.io/
+  - type: APIReference
+    url: https://docs.ritten.io/
+  - type: Authentication
+    url: authentication/ritten-authentication.yml
+  - type: Conventions
+    url: conventions/ritten-conventions.yml
+  - type: ErrorCatalog
+    url: errors/ritten-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/ritten-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/ritten-webhooks.yml
+  - type: DataModel
+    url: data-model/ritten-data-model.yml
+  - type: Lifecycle
+    url: lifecycle/ritten-lifecycle.yml
+  - type: Sandbox
+    url: sandbox/ritten-sandbox.yml
+- aid: ritten:ritten-oauth-api
+  name: Ritten OAUTH API
+  description: >-
+    OAuth 2.0 token endpoint for obtaining access tokens. This is the
+
+    recommended way to authenticate with the Ritten External API.
+  humanURL: https://docs.ritten.io/
+  baseURL: https://api.ritten.io/v1
+  tags:
+  - oauth
+  properties:
+  - type: OpenAPI
+    url: openapi/ritten-oauth-api-openapi.yml
   - type: Documentation
     url: https://docs.ritten.io/
   - type: APIReference
