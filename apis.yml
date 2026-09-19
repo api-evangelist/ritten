@@ -582,6 +582,8 @@ apis:
   humanURL: https://docs.ritten.io/
   baseURL: https://api.ritten.io/v1
   tags:
+  - Authentication
+  tags_raw:
   - oauth
   properties:
   - type: OpenAPI
