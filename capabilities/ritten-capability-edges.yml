@@ -11,8 +11,20 @@ capability_model:
   attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
     CC BY 4.0
   notice: NOTICE
-edge_count: 2
+edge_count: 4
 edges:
+- tag: calendar
+  spec_file: ritten-calendar-api-openapi.yml
+  capability_id: BC-2800.10
+  capability_id_l1: BC-2800
+  capability_name: Scheduling & Appointment Management
+  confidence: 0.75
+  evidence: POST /calendar/events/list  Query calendar events; POST /calendar/events  Create a new calendar
+    event
+  reason: Ritten is a behavioral-health EMR whose product covers scheduling; the tag exposes creation
+    and querying of calendar events, i.e. appointment/resource scheduling. Slight ambiguity as the events
+    are generic calendar objects, hence 0.75.
+  recovered_from: healthcare-vertical-edges.json
 - tag: forms
   spec_file: ritten-forms-api-openapi.yml
   capability_id: BC-2830
@@ -35,3 +47,15 @@ edges:
   reason: Creation and stewardship of patient demographic, identity, insurance and relationship data is
     patient registration/record establishment. Some operations (vitals, chart attachments) spill into
     clinical documentation, so confidence is moderate.
+- tag: users
+  spec_file: ritten-users-api-openapi.yml
+  capability_id: BC-620.20
+  capability_id_l1: BC-620
+  capability_name: Identity & Access Management
+  confidence: 0.7
+  evidence: POST /users/{id}/roles Assign a role to a user; DELETE /users/{id}/roles/{roleID} Remove a
+    role from a user; GET /staff List all clinic staff users
+  reason: User account lifecycle and role assignment for clinic staff and teams — identity and access
+    administration, not medical staff credentialing (no privileging, verification, or peer-review operations
+    appear).
+  recovered_from: healthcare-vertical-edges.json
