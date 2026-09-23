@@ -5,20 +5,38 @@ info:
     url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
     backgroundColor: '#FFFFFF'
     altText: Ritten Logo
-  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  description: 'For Ritten Integrating Partners
+
+
+    ## Authentication
+
+
+    - Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:
+
+    ```bash
+
+    curl https://api.ritten.io/v1/oauth/token \
+
+    -X POST \
+
+    -H ''content-type: application/json'' \
+
+    -d ''{"client_id":"${client_id}","client_secret":"${client_secret}","audience":"https://external-api.ritten.io","grant_type":"client_credentials"}''
+
+    ```
+
+    - Take the `access_token` from the response and use that as…'
   version: 1.0.0
 servers:
 - url: https://api.ritten.io/v1
 tags:
-- name: forms
-  description: 'Endpoints for accessing form definitions and form-related data.
-
-    '
+- name: Forms
+  description: Endpoints for accessing form definitions and form-related data.
 paths:
   /patients/{id}/forms:
     post:
       tags:
-      - forms
+      - Forms
       summary: Create a form on a patient chart and submit field values
       description: 'Creates a form instance from a pre-configured form definition (resolved by its label) on the
 
@@ -70,9 +88,7 @@ paths:
 
         recalculated. Requests are not idempotent: retrying a successful call creates a second form
 
-        instance.
-
-        '
+        instance.'
       operationId: postPatientForm
       parameters:
       - name: id
@@ -117,7 +133,7 @@ paths:
   /forms/definitions:
     get:
       tags:
-      - forms
+      - Forms
       summary: List form definitions
       description: Returns all form definitions configured for the clinic, including section definitions and signature requirements
       operationId: listFormDefinitions
@@ -157,26 +173,35 @@ paths:
           description: Unauthorized
 components:
   schemas:
-    FormDefinitionSignatureRequirement:
+    FieldDefinition:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        formDefinitionId:
+        label:
           type: string
-          format: uuid
-        roles:
+        title:
+          type: string
+        description:
+          type: string
+        fieldType:
+          type: string
+          description: Type of field (e.g., text, number, date, select)
+        sortOrder:
+          type: integer
+        isRequired:
+          type: boolean
+        options:
           type: array
           items:
             type: object
             properties:
-              id:
+              label:
                 type: string
-                format: uuid
-              name:
+              value:
                 type: string
-          description: Roles that can fulfill this signature requirement
+          description: Options for select/radio/checkbox fields
     PatientFormField:
       type: object
       properties:
@@ -205,6 +230,79 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PatientFormField'
+    PatientForm:
+      type: object
+      properties:
+        formInstanceId:
+          type: string
+          format: uuid
+        formDefinitionLabel:
+          type: string
+          example: phq9_intake_form
+        patientId:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter the form is attached to.
+        createdAt:
+          type: string
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientFormSection'
+    PostPatientForm:
+      type: object
+      additionalProperties: false
+      required:
+      - formDefinitionLabel
+      - encounterId
+      properties:
+        formDefinitionLabel:
+          type: string
+          description: Label of the form definition to instantiate. Discover labels via `GET /forms/definitions`.
+          example: phq9_intake_form
+        encounterId:
+          type: string
+          format: uuid
+          description: 'Encounter (visit) to attach the form to. The encounter must already exist and belong to
+
+            the patient — create the encounter before submitting form data.
+
+            '
+        values:
+          type: object
+          additionalProperties: true
+          description: 'Flat map of field definition label to value. Value shapes are field-type specific (see the
+
+            endpoint description). A JSON null clears the field. Omit to create an empty form.
+
+            '
+          example:
+            roobi_depression_phq9_q1: '2'
+            reason_for_visit: referral
+    FormDefinitionSignatureRequirement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        formDefinitionId:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Roles that can fulfill this signature requirement
     FormDefinition:
       type: object
       properties:
@@ -252,88 +350,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FormDefinitionSignatureRequirement'
-    PostPatientForm:
-      type: object
-      additionalProperties: false
-      required:
-      - formDefinitionLabel
-      - encounterId
-      properties:
-        formDefinitionLabel:
-          type: string
-          description: Label of the form definition to instantiate. Discover labels via `GET /forms/definitions`.
-          example: phq9_intake_form
-        encounterId:
-          type: string
-          format: uuid
-          description: 'Encounter (visit) to attach the form to. The encounter must already exist and belong to
-
-            the patient — create the encounter before submitting form data.
-
-            '
-        values:
-          type: object
-          additionalProperties: true
-          description: 'Flat map of field definition label to value. Value shapes are field-type specific (see the
-
-            endpoint description). A JSON null clears the field. Omit to create an empty form.
-
-            '
-          example:
-            roobi_depression_phq9_q1: '2'
-            reason_for_visit: referral
-    PatientForm:
-      type: object
-      properties:
-        formInstanceId:
-          type: string
-          format: uuid
-        formDefinitionLabel:
-          type: string
-          example: phq9_intake_form
-        patientId:
-          type: string
-          format: uuid
-        encounterId:
-          type: string
-          format: uuid
-          description: Encounter the form is attached to.
-        createdAt:
-          type: string
-          format: date-time
-        sections:
-          type: array
-          items:
-            $ref: '#/components/schemas/PatientFormSection'
-    FieldDefinition:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        label:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        fieldType:
-          type: string
-          description: Type of field (e.g., text, number, date, select)
-        sortOrder:
-          type: integer
-        isRequired:
-          type: boolean
-        options:
-          type: array
-          items:
-            type: object
-            properties:
-              label:
-                type: string
-              value:
-                type: string
-          description: Options for select/radio/checkbox fields
     SectionDefinition:
       type: object
       properties:

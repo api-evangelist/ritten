@@ -5,20 +5,38 @@ info:
     url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
     backgroundColor: '#FFFFFF'
     altText: Ritten Logo
-  description: "For Ritten Integrating Partners\n\n## Authentication\n\n- Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:\n```bash\ncurl https://api.ritten.io/v1/oauth/token \\\n  -X POST \\\n  -H 'content-type: application/json' \\\n  -d '{\"client_id\":\"${client_id}\",\"client_secret\":\"${client_secret}\",\"audience\":\"https://external-api.ritten.io\",\"grant_type\":\"client_credentials\"}'\n```\n- Take the `access_token` from the response and use that as the `Bearer` token in your requests to our API.\n- Tokens are long-lived (24 hours / `expires_in: 86400`). The token endpoint also caches server-side, so rapid repeat calls won't hit Auth0 — but feel free to cache the access_token locally if you prefer.\n- The token endpoint itself does not require a Bearer token; the `client_secret` in the body is the authentication.\n\n> **Note:** When working in non-production environments, the API endpoints (and `audience` value) will be different.\n> For example, in the `beta` environment, the token endpoint is `https://api.beta.ritten.io/v1/oauth/token`\n> and the audience is `https://external-api.beta.ritten.io`.\n\n## Tenant Header\n\n- Make sure to add the tenant ID to the header of every request. This is the Ritten Clinic instance the request will target. Example:\n```\nX-Ritten-Tenant: ritclinic\n```\n\n## Rate Limiting\n\nTwo layers of rate limiting apply: per-request limits on API calls, and per-app limits on token minting.\n\n### API request rate limit\n\nApplied to authenticated API calls (everything except `/v1/oauth/token`):\n\n- 50 requests per second sustained rate\n- 100 requests burst allowance\n\nYou can make up to 100 requests in a short burst, but over time your average must stay at or below 50 requests per second. Think of it as a bucket that holds 100 tokens and refills at 50 tokens per second. Each request consumes one token. You'll receive a `429 Too Many Requests` response when this is triggered.\n\n### Token mint quota (Auth0)\n\nA separate per-application limit on how often you can mint new access tokens:\n\n- 2 mints per hour\n- 3 mints per day\n\nThese limits are applied at the Auth0 layer and count mints across both the legacy direct path and the cached `/v1/oauth/token` endpoint combined. **The cached endpoint is designed so that one mint per day is sufficient for any traffic volume** — the proxy serves all subsequent requests from the cached token. If you migrate to the cached endpoint, you will not notice these limits.\n\nToken mint quotas currently apply to all newly-provisioned integrator clients. They will be rolled out to existing clients on a separate schedule, and you will be contacted before that change applies to you.\n"
+  description: 'For Ritten Integrating Partners
+
+
+    ## Authentication
+
+
+    - Request an access token with your provided integration credentials (`client_id` and `client_secret`) by calling our token endpoint:
+
+    ```bash
+
+    curl https://api.ritten.io/v1/oauth/token \
+
+    -X POST \
+
+    -H ''content-type: application/json'' \
+
+    -d ''{"client_id":"${client_id}","client_secret":"${client_secret}","audience":"https://external-api.ritten.io","grant_type":"client_credentials"}''
+
+    ```
+
+    - Take the `access_token` from the response and use that as…'
   version: 1.0.0
 servers:
 - url: https://api.ritten.io/v1
 tags:
-- name: tasks
-  description: 'Endpoints for accessing clinic tasks. Tasks linked to a client are only returned when the integration is authorized to read that client.
-
-    '
+- name: Tasks
+  description: Endpoints for accessing clinic tasks. Tasks linked to a client are only returned when the integration is authorized to read that client.
 paths:
   /tasks:
     get:
       tags:
-      - tasks
+      - Tasks
       summary: List tasks in a clinic
       description: 'Lists tasks with pagination and optional filters. Tasks linked to a client are only
 
@@ -27,9 +45,7 @@ paths:
         are excluded from both the results and `meta.totalCount`.
 
 
-        `title` and `description` are unstructured clinical free text and may contain PHI.
-
-        '
+        `title` and `description` are unstructured clinical free text and may contain PHI.'
       operationId: listTasks
       parameters:
       - name: assigneeIds
@@ -152,7 +168,7 @@ paths:
           description: Invalid query parameters
     post:
       tags:
-      - tasks
+      - Tasks
       summary: Create a task
       description: 'Creates a task assigned to a staff member. The server assigns the id, timestamps and
 
@@ -161,9 +177,7 @@ paths:
 
         The assignee is notified exactly as they would be for a task created in the app.
 
-        Requests are not idempotent: retrying a successful call creates a second task.
-
-        '
+        Requests are not idempotent: retrying a successful call creates a second task.'
       operationId: postTask
       requestBody:
         required: true
@@ -185,7 +199,7 @@ paths:
   /tasks/{id}:
     patch:
       tags:
-      - tasks
+      - Tasks
       summary: Update a task
       description: 'Applies a partial update to an existing task. Only the fields you send are changed;
 
@@ -194,9 +208,7 @@ paths:
 
         Setting `description` replaces any rich text the task carries, so the text you send
 
-        is what staff see in the app.
-
-        '
+        is what staff see in the app.'
       operationId: patchTask
       parameters:
       - name: id
@@ -232,12 +244,93 @@ components:
       - Working
       - Complete
       - Won't Do
+    ListTasks:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    PatchTaskBody:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'External partial update contract for tasks. Only the fields present in the request are
+
+        changed; omitted fields keep their stored value. At least one field must be set.
+
+        '
+      example:
+        status: Complete
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Unstructured clinical free text; may contain PHI. Replaces any rich text the task carries.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due. Send an empty string to clear an existing due date.
+          example: '2024-01-31'
     TaskPriority:
       type: string
       enum:
       - Low
       - Medium
       - High
+    PostTaskBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract for tasks. The server assigns the id, timestamps and creator.
+
+        '
+      required:
+      - title
+      - assigneeId
+      example:
+        title: Call the pharmacy
+        assigneeId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        priority: High
+        dueDate: '2024-01-31'
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Optional detail. Unstructured clinical free text; may contain PHI. Markdown is rendered.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due.
+          example: '2024-01-31'
     Task:
       type: object
       properties:
@@ -299,84 +392,3 @@ components:
             format: date-time
           - type: 'null'
           example: '2024-01-02T00:00:00Z'
-    ListTasks:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        tasks:
-          type: array
-          items:
-            $ref: '#/components/schemas/Task'
-    PatchTaskBody:
-      type: object
-      additionalProperties: false
-      minProperties: 1
-      description: 'External partial update contract for tasks. Only the fields present in the request are
-
-        changed; omitted fields keep their stored value. At least one field must be set.
-
-        '
-      example:
-        status: Complete
-      properties:
-        title:
-          type: string
-          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
-        description:
-          type: string
-          description: Unstructured clinical free text; may contain PHI. Replaces any rich text the task carries.
-        assigneeId:
-          type: string
-          format: uuid
-          description: The staff user to assign the task to. Must be an active staff user.
-        priority:
-          $ref: '#/components/schemas/TaskPriority'
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        dueDate:
-          type: string
-          format: date
-          description: Date the task is due. Send an empty string to clear an existing due date.
-          example: '2024-01-31'
-    PostTaskBody:
-      type: object
-      additionalProperties: false
-      description: 'External create contract for tasks. The server assigns the id, timestamps and creator.
-
-        '
-      required:
-      - title
-      - assigneeId
-      example:
-        title: Call the pharmacy
-        assigneeId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
-        priority: High
-        dueDate: '2024-01-31'
-      properties:
-        title:
-          type: string
-          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
-        description:
-          type: string
-          description: Optional detail. Unstructured clinical free text; may contain PHI. Markdown is rendered.
-        assigneeId:
-          type: string
-          format: uuid
-          description: The staff user to assign the task to. Must be an active staff user.
-        priority:
-          $ref: '#/components/schemas/TaskPriority'
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        dueDate:
-          type: string
-          format: date
-          description: Date the task is due.
-          example: '2024-01-31'
