@@ -237,100 +237,6 @@ paths:
           description: Task not found, or no staff user found for the supplied assigneeId
 components:
   schemas:
-    TaskStatus:
-      type: string
-      enum:
-      - New
-      - Working
-      - Complete
-      - Won't Do
-    ListTasks:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        tasks:
-          type: array
-          items:
-            $ref: '#/components/schemas/Task'
-    PatchTaskBody:
-      type: object
-      additionalProperties: false
-      minProperties: 1
-      description: 'External partial update contract for tasks. Only the fields present in the request are
-
-        changed; omitted fields keep their stored value. At least one field must be set.
-
-        '
-      example:
-        status: Complete
-      properties:
-        title:
-          type: string
-          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
-        description:
-          type: string
-          description: Unstructured clinical free text; may contain PHI. Replaces any rich text the task carries.
-        assigneeId:
-          type: string
-          format: uuid
-          description: The staff user to assign the task to. Must be an active staff user.
-        priority:
-          $ref: '#/components/schemas/TaskPriority'
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        dueDate:
-          type: string
-          format: date
-          description: Date the task is due. Send an empty string to clear an existing due date.
-          example: '2024-01-31'
-    TaskPriority:
-      type: string
-      enum:
-      - Low
-      - Medium
-      - High
-    PostTaskBody:
-      type: object
-      additionalProperties: false
-      description: 'External create contract for tasks. The server assigns the id, timestamps and creator.
-
-        '
-      required:
-      - title
-      - assigneeId
-      example:
-        title: Call the pharmacy
-        assigneeId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
-        priority: High
-        dueDate: '2024-01-31'
-      properties:
-        title:
-          type: string
-          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
-        description:
-          type: string
-          description: Optional detail. Unstructured clinical free text; may contain PHI. Markdown is rendered.
-        assigneeId:
-          type: string
-          format: uuid
-          description: The staff user to assign the task to. Must be an active staff user.
-        priority:
-          $ref: '#/components/schemas/TaskPriority'
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        dueDate:
-          type: string
-          format: date
-          description: Date the task is due.
-          example: '2024-01-31'
     Task:
       type: object
       properties:
@@ -392,3 +298,97 @@ components:
             format: date-time
           - type: 'null'
           example: '2024-01-02T00:00:00Z'
+    TaskStatus:
+      type: string
+      enum:
+      - New
+      - Working
+      - Complete
+      - Won't Do
+    PatchTaskBody:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'External partial update contract for tasks. Only the fields present in the request are
+
+        changed; omitted fields keep their stored value. At least one field must be set.
+
+        '
+      example:
+        status: Complete
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Unstructured clinical free text; may contain PHI. Replaces any rich text the task carries.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due. Send an empty string to clear an existing due date.
+          example: '2024-01-31'
+    PostTaskBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract for tasks. The server assigns the id, timestamps and creator.
+
+        '
+      required:
+      - title
+      - assigneeId
+      example:
+        title: Call the pharmacy
+        assigneeId: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        priority: High
+        dueDate: '2024-01-31'
+      properties:
+        title:
+          type: string
+          description: Short summary of the task. Unstructured clinical free text; may contain PHI.
+        description:
+          type: string
+          description: Optional detail. Unstructured clinical free text; may contain PHI. Markdown is rendered.
+        assigneeId:
+          type: string
+          format: uuid
+          description: The staff user to assign the task to. Must be an active staff user.
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        dueDate:
+          type: string
+          format: date
+          description: Date the task is due.
+          example: '2024-01-31'
+    ListTasks:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    TaskPriority:
+      type: string
+      enum:
+      - Low
+      - Medium
+      - High

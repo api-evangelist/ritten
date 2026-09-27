@@ -173,86 +173,6 @@ paths:
           description: Unauthorized
 components:
   schemas:
-    FieldDefinition:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        label:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        fieldType:
-          type: string
-          description: Type of field (e.g., text, number, date, select)
-        sortOrder:
-          type: integer
-        isRequired:
-          type: boolean
-        options:
-          type: array
-          items:
-            type: object
-            properties:
-              label:
-                type: string
-              value:
-                type: string
-          description: Options for select/radio/checkbox fields
-    PatientFormField:
-      type: object
-      properties:
-        fieldLabel:
-          type: string
-          example: roobi_depression_phq9_q1
-        title:
-          type: string
-          description: The field's prompt text.
-        type:
-          type: string
-          description: The field's type (e.g. text, date, single_choice_scale, grid_matrix_text).
-          example: single_choice_scale
-        value:
-          description: The field's stored value; null when unset.
-    PatientFormSection:
-      type: object
-      properties:
-        sectionLabel:
-          type: string
-          example: roobi_depression_phq9
-        title:
-          type: string
-          example: PHQ-9
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/PatientFormField'
-    PatientForm:
-      type: object
-      properties:
-        formInstanceId:
-          type: string
-          format: uuid
-        formDefinitionLabel:
-          type: string
-          example: phq9_intake_form
-        patientId:
-          type: string
-          format: uuid
-        encounterId:
-          type: string
-          format: uuid
-          description: Encounter the form is attached to.
-        createdAt:
-          type: string
-          format: date-time
-        sections:
-          type: array
-          items:
-            $ref: '#/components/schemas/PatientFormSection'
     PostPatientForm:
       type: object
       additionalProperties: false
@@ -283,26 +203,6 @@ components:
           example:
             roobi_depression_phq9_q1: '2'
             reason_for_visit: referral
-    FormDefinitionSignatureRequirement:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        formDefinitionId:
-          type: string
-          format: uuid
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              name:
-                type: string
-          description: Roles that can fulfill this signature requirement
     FormDefinition:
       type: object
       properties:
@@ -350,6 +250,68 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FormDefinitionSignatureRequirement'
+    FieldDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        fieldType:
+          type: string
+          description: Type of field (e.g., text, number, date, select)
+        sortOrder:
+          type: integer
+        isRequired:
+          type: boolean
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+          description: Options for select/radio/checkbox fields
+    FormDefinitionSignatureRequirement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        formDefinitionId:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Roles that can fulfill this signature requirement
+    PatientFormSection:
+      type: object
+      properties:
+        sectionLabel:
+          type: string
+          example: roobi_depression_phq9
+        title:
+          type: string
+          example: PHQ-9
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientFormField'
     SectionDefinition:
       type: object
       properties:
@@ -368,3 +330,41 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FieldDefinition'
+    PatientForm:
+      type: object
+      properties:
+        formInstanceId:
+          type: string
+          format: uuid
+        formDefinitionLabel:
+          type: string
+          example: phq9_intake_form
+        patientId:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter the form is attached to.
+        createdAt:
+          type: string
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientFormSection'
+    PatientFormField:
+      type: object
+      properties:
+        fieldLabel:
+          type: string
+          example: roobi_depression_phq9_q1
+        title:
+          type: string
+          description: The field's prompt text.
+        type:
+          type: string
+          description: The field's type (e.g. text, date, single_choice_scale, grid_matrix_text).
+          example: single_choice_scale
+        value:
+          description: The field's stored value; null when unset.

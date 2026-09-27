@@ -96,16 +96,6 @@ paths:
                   $ref: '#/components/schemas/EncounterType'
 components:
   schemas:
-    AttendanceType:
-      type: string
-      description: Attendance status of an encounter. Defaults to Attended when omitted at creation.
-      enum:
-      - Attended
-      - AttendedNotBillable
-      - AbsentExcused
-      - AbsentNotExcused
-      - AbsentUnknown
-      - AbsentBillable
     EncounterType:
       type: object
       properties:
@@ -169,6 +159,16 @@ components:
           type: string
           format: date-time
           example: '2024-01-01T00:00:00Z'
+    AttendanceType:
+      type: string
+      description: Attendance status of an encounter. Defaults to Attended when omitted at creation.
+      enum:
+      - Attended
+      - AttendedNotBillable
+      - AbsentExcused
+      - AbsentNotExcused
+      - AbsentUnknown
+      - AbsentBillable
     PostEncounterBody:
       type: object
       additionalProperties: false

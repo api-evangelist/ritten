@@ -247,53 +247,48 @@ paths:
           description: Organization not found
 components:
   schemas:
-    Organization:
+    ListOrganizations:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: Ritten Recovery Center
-        typeId:
-          type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
-          type: string
-          format: uuid
-          description: User assigned to the organization, if any.
-        website:
-          type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
-        createdAt:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00Z'
-    PatchOrganizationBody:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    PostOrganizationAddress:
       type: object
-      additionalProperties: false
       properties:
-        name:
+        country:
           type: string
-          description: Organization name. Leading and trailing whitespace is trimmed.
-          example: Ritten Recovery Center
-        typeId:
+          example: US
+        line:
           type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
+          description: Street address line 1.
+          example: 123 Main St
+        line2:
           type: string
-          format: uuid
-          description: User assigned to the organization.
-        website:
+          description: Street address line 2.
+          example: Suite 100
+        city:
           type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
+          example: New York
+        region:
+          type: string
+          example: NY
+        postalCode:
+          type: string
+          example: '10001'
+        notes:
+          type: string
+          example: Main admissions office
     PostOrganizationBody:
       type: object
       additionalProperties: false
@@ -333,32 +328,6 @@ components:
           type: string
           format: uuid
           description: Person to set as the organization's primary contact.
-    PostOrganizationAddress:
-      type: object
-      properties:
-        country:
-          type: string
-          example: US
-        line:
-          type: string
-          description: Street address line 1.
-          example: 123 Main St
-        line2:
-          type: string
-          description: Street address line 2.
-          example: Suite 100
-        city:
-          type: string
-          example: New York
-        region:
-          type: string
-          example: NY
-        postalCode:
-          type: string
-          example: '10001'
-        notes:
-          type: string
-          example: Main admissions office
     ListOrganizationMembers:
       type: object
       properties:
@@ -375,22 +344,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrganizationMember'
-    ListOrganizations:
+    PatchOrganizationBody:
       type: object
+      additionalProperties: false
       properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        organizations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Organization'
+        name:
+          type: string
+          description: Organization name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
     OrganizationMember:
       type: object
       properties:
@@ -407,3 +381,29 @@ components:
         last:
           type: string
           example: Doe
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization, if any.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'

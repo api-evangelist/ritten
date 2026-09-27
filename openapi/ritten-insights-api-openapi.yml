@@ -894,6 +894,208 @@ paths:
           description: Unauthorized
 components:
   schemas:
+    OrganizationsReport:
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            type: object
+            properties:
+              orgName:
+                type: string
+              orgType:
+                type: string
+              url:
+                type: string
+              relationshipOwner:
+                type: string
+              primaryContact:
+                type: string
+              email:
+                type: string
+              phone:
+                type: string
+              addressLine:
+                type: string
+              addressLine2:
+                type: string
+              addressCity:
+                type: string
+              addressRegion:
+                type: string
+              addressCountry:
+                type: string
+              addressPostalCode:
+                type: string
+              memberCount:
+                type:
+                - integer
+                - 'null'
+    EventAuditReport:
+      type: object
+      properties:
+        eventAudits:
+          type: array
+          items:
+            type: object
+            properties:
+              eventId:
+                type: string
+                format: uuid
+              eventName:
+                type: string
+              eventEncounter:
+                type: string
+                description: Encounter type name
+              startTime:
+                type: string
+                format: date-time
+              minutesAttended:
+                type: number
+              isGroup:
+                type: boolean
+              staff:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - uuid
+                  - name
+                description: Staff attendee names
+              clients:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                    name:
+                      type: string
+                    mrn:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - patient
+                      - program
+                      - clinic team
+                  required:
+                  - uuid
+                  - name
+                  - type
+                description: Client attendee names
+              status:
+                type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    AdmissionsReport:
+      type: object
+      properties:
+        admissions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: Admit
+              admitDate:
+                type: string
+                format: date-time
+              dischargeDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              program:
+                type: string
+              programId:
+                type: string
+                format: uuid
+                description: Clinic program ID corresponding to the program name
+              levelOfCare:
+                type: string
+              referralType:
+                type: string
+              referralOrganization:
+                type: string
+              referralPointOfContact:
+                type: string
+              mrn:
+                type: string
+              name:
+                type: string
+              age:
+                type: integer
+              sex:
+                type: string
+              notes:
+                type: string
+              primaryClinician:
+                type: string
+              phoneUse:
+                type: string
+              phoneNumber:
+                type: string
+              addressUse:
+                type: string
+              addressLine:
+                type: string
+              addressLine2:
+                type: string
+              addressCity:
+                type: string
+              addressRegion:
+                type: string
+              addressCountry:
+                type: string
+              addressPostalCode:
+                type: string
+              email:
+                type: string
+              notify:
+                type: boolean
+              portalEmail:
+                type: string
+              programLos:
+                type: integer
+                description: Length of stay in days
+              payerName:
+                type: string
+              insuranceStartDate:
+                type:
+                - string
+                - 'null'
+                format: date
+              insuranceExpirationDate:
+                type:
+                - string
+                - 'null'
+                format: date
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+        clinical:
+          type: boolean
     CreatedCasesReport:
       type: object
       properties:
@@ -953,252 +1155,39 @@ components:
                 type: string
         clinicURL:
           type: string
-    ClientEventHistoryReport:
+    ProgramCensusReport:
       type: object
       properties:
-        Events:
+        censuses:
           type: array
           items:
             type: object
             properties:
-              Date:
-                type: string
-                format: date-time
-              EventName:
-                type: string
-              StartTime:
-                type: string
-                format: date-time
-              EndTime:
-                type: string
-                format: date-time
-              TotalDuration:
-                type: number
-                description: Duration in minutes
-              Status:
-                type: string
-                description: Event status (Occurred, Scheduled, Canceled, OccurredNoEncounter)
-              AttendanceType:
-                type: string
-              Absent:
-                type: boolean
-              Billable:
-                type: boolean
-              BillableUnits:
-                type: integer
-              CancellationType:
-                type: string
-              Note:
-                type: string
-              PatientID:
+              programId:
                 type: string
                 format: uuid
-              FirstName:
-                type: string
-              LastName:
-                type: string
-              ProgramName:
-                type: string
-              LevelOfCare:
-                type: string
-              EncounterType:
-                type: string
-              IsGroup:
-                type: boolean
-        StartDate:
-          type: string
-          format: date-time
-        EndDate:
-          type: string
-          format: date-time
-    AlosReport:
-      type: object
-      properties:
-        aloss:
-          type: array
-          items:
-            type: object
-            properties:
-              clientFirstName:
-                type: string
-              clientLastName:
-                type: string
-              currentStatus:
-                type: string
-              age:
-                type: integer
-              sex:
-                type: string
-              current:
-                type: string
-                description: X if currently in program
               program:
                 type: string
-              programType:
-                type: string
               programLoc:
-                type: string
-              programLos:
-                type: integer
-                description: Length of stay in days
-              admitDate:
-                type: string
-                format: date-time
-              dischargeDate:
-                type:
-                - string
-                - 'null'
-                format: date-time
-              primaryClinician:
-                type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-    OrganizationsReport:
-      type: object
-      properties:
-        organizations:
-          type: array
-          items:
-            type: object
-            properties:
-              orgName:
-                type: string
-              orgType:
-                type: string
-              url:
-                type: string
-              relationshipOwner:
-                type: string
-              primaryContact:
-                type: string
-              email:
-                type: string
-              phone:
-                type: string
-              addressLine:
-                type: string
-              addressLine2:
-                type: string
-              addressCity:
-                type: string
-              addressRegion:
-                type: string
-              addressCountry:
-                type: string
-              addressPostalCode:
-                type: string
-              memberCount:
-                type:
-                - integer
-                - 'null'
-    DisqualifiedCasesReport:
-      type: object
-      properties:
-        deals:
-          type: array
-          items:
-            type: object
-            properties:
-              dealId:
-                type: string
-                format: uuid
-              dealName:
-                type: string
-              dealDisqualificationDate:
-                type: string
-                format: date-time
-              createdAt:
-                type: string
-                format: date-time
-              personSeekingTreatment:
-                type: string
-              dealContactNames:
-                type: string
-              referralPointOfContact:
-                type: string
-              referralOrganization:
-                type: string
-              referralOrganizationRelationshipOwners:
-                type: string
-              referralType:
-                type: string
-              dealSize:
-                type: integer
-                description: In cents
-              anticipatedPrograms:
                 type: array
                 items:
                   type: string
-              referralSource:
-                type: string
-              caseSource:
-                type: string
-              dealOwner:
-                type: string
-              fundingSource:
-                type: string
-              payerGroupName:
-                type: string
-              payerName:
-                type: string
-              disqualificationReason:
-                type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-        clinicURL:
-          type: string
-    ClientAttendanceByStatusReport:
-      type: object
-      properties:
-        rows:
-          type: array
-          items:
-            type: object
-            properties:
-              firstName:
-                type: string
-              lastName:
-                type: string
-              programName:
-                type: string
-              levelOfCare:
-                type: string
-              encounterType:
-                type: string
-              billable:
-                type: boolean
-              isGroup:
-                type: boolean
-              statusCounts:
-                type: object
-                additionalProperties:
-                  type: integer
-                description: Map of attendance type name to count
-              minutesAttended:
+              average:
                 type: number
-              totalBillableUnits:
+                description: Average daily census
+              startCount:
                 type: integer
-        attendanceTypes:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              name:
-                type: string
-              absent:
-                type: boolean
-              billable:
+                description: Beginning census
+              endCount:
+                type: integer
+                description: Ending census
+              minCount:
+                type: integer
+                description: Minimum census during period
+              maxCount:
+                type: integer
+                description: Maximum census during period
+              archived:
                 type: boolean
         startDate:
           type: string
@@ -1281,345 +1270,6 @@ components:
         endDate:
           type: string
           format: date-time
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        email:
-          type: string
-          example: johndoe@ritclinic.ritten.io
-        first:
-          type: string
-          example: Doe
-        middle:
-          type: string
-        last:
-          type: string
-          example: John
-        lastAccessedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
-          example: '2024-01-15T14:32:00Z'
-    EncounterHistoryReport:
-      type: object
-      properties:
-        encounters:
-          type: array
-          items:
-            type: object
-            properties:
-              encounterID:
-                type: string
-                format: uuid
-              patientID:
-                type: string
-                format: uuid
-              firstName:
-                type: string
-              lastName:
-                type: string
-              mrn:
-                type: string
-              program:
-                type: string
-                description: Current clinical program name
-              programLoc:
-                type: string
-                description: Level of care
-              encounterType:
-                type: string
-              isGroup:
-                type: boolean
-              isBilling:
-                type: boolean
-              encounterCreator:
-                type: string
-              supervisingProvider:
-                type: string
-              status:
-                type: string
-                enum:
-                - Pending
-                - In Progress
-                - Scheduled
-                - Complete
-                - Incomplete
-                - Cancelled
-              startTime:
-                type: string
-                format: date-time
-              endTime:
-                type:
-                - string
-                - 'null'
-                format: date-time
-              attendanceType:
-                type: string
-              fundingSource:
-                type: string
-              primaryInsurancePayer:
-                type: string
-              minutesAttended:
-                type: number
-              groupEncounterID:
-                type:
-                - string
-                - 'null'
-                format: uuid
-              groupTitle:
-                type: string
-              modifiers:
-                type: array
-                items:
-                  type: string
-              completedForms:
-                type: integer
-              incompleteForms:
-                type: integer
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-        clinicURL:
-          type: string
-        supervisingProvidersEnabled:
-          type: boolean
-    CareTeamsReport:
-      type: object
-      properties:
-        careTeams:
-          type: array
-          items:
-            type: object
-            properties:
-              firstName:
-                type: string
-              lastName:
-                type: string
-              mrn:
-                type: string
-              activeClinicalProgram:
-                type: string
-                description: Active clinical program name with level of care
-              admitDate:
-                type:
-                - string
-                - 'null'
-                format: date-time
-              activeAdditionalServices:
-                type: string
-                description: Pipe-separated list of additional services
-              payer:
-                type: string
-              primaryClinician:
-                type: string
-              primaryClinicianRoles:
-                type: string
-                description: Comma-separated list of roles
-              clinician2Name:
-                type: string
-              clinician2Roles:
-                type: string
-              clinician3Name:
-                type: string
-              clinician3Roles:
-                type: string
-              clinician4Name:
-                type: string
-              clinician4Roles:
-                type: string
-              clinician5Name:
-                type: string
-              clinician5Roles:
-                type: string
-              clinician6Name:
-                type: string
-              clinician6Roles:
-                type: string
-              clinician7Name:
-                type: string
-              clinician7Roles:
-                type: string
-              clinician8Name:
-                type: string
-              clinician8Roles:
-                type: string
-              clinician9Name:
-                type: string
-              clinician9Roles:
-                type: string
-              clinician10Name:
-                type: string
-              clinician10Roles:
-                type: string
-    CensusReport:
-      type: object
-      properties:
-        patients:
-          type: array
-          items:
-            type: object
-            properties:
-              clientFirstName:
-                type: string
-              clientLastName:
-                type: string
-              mrn:
-                type: string
-              dob:
-                type:
-                - string
-                - 'null'
-                format: date
-              age:
-                type: integer
-              clinicalProgramNames:
-                type: array
-                items:
-                  type: string
-              levelsOfCare:
-                type: array
-                items:
-                  type: string
-              nonClinicalProgramNames:
-                type: array
-                items:
-                  type: string
-              originalAdmitDate:
-                type: string
-                format: date-time
-              estimatedDischargeDates:
-                type:
-                - string
-                - 'null'
-                format: date
-              teamNames:
-                type: array
-                items:
-                  type: string
-              primaryEmail:
-                type: string
-              primaryPhone:
-                type: string
-              race:
-                type: array
-                items:
-                  type: string
-              ethnicity:
-                type: array
-                items:
-                  type: string
-              preferredLanguage:
-                type: string
-              sex:
-                type: string
-              gender:
-                type: array
-                items:
-                  type: string
-              sexuality:
-                type: string
-              maritalStatus:
-                type: string
-              payerType:
-                type: string
-              payerName:
-                type: string
-              insuranceStartDate:
-                type:
-                - string
-                - 'null'
-                format: date
-              insuranceExpirationDate:
-                type:
-                - string
-                - 'null'
-                format: date
-              primaryClinicianFirst:
-                type: string
-              primaryClinicianLast:
-                type: string
-              diagnoses:
-                type: array
-                items:
-                  type: string
-              allergies:
-                type: array
-                items:
-                  type: string
-              billingAddressUse:
-                type: string
-              billingAddressCountry:
-                type: string
-              billingAddressLine:
-                type: string
-              billingAddressLine2:
-                type: string
-              billingAddressCity:
-                type: string
-              billingAddressRegion:
-                type: string
-              billingAddressPostalCode:
-                type: string
-              billingAddressNotes:
-                type: string
-              emergencyContactName:
-                type: string
-              emergencyContactPhone:
-                type: string
-              emergencyContactEmail:
-                type: string
-        isBrief:
-          type: boolean
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-    OrganizationNotesReport:
-      type: object
-      properties:
-        organizationNoteSet:
-          type: object
-          properties:
-            notes:
-              type: array
-              items:
-                type: object
-                properties:
-                  organizationId:
-                    type: string
-                    format: uuid
-                  organizationName:
-                    type: string
-                  primaryContactName:
-                    type: string
-                  noteTakenAt:
-                    type:
-                    - string
-                    - 'null'
-                    format: date-time
-                  noteActivityType:
-                    type: string
-                  noteContent:
-                    type: string
-                  creator:
-                    type: string
-            startDate:
-              type: string
-              format: date-time
-            endDate:
-              type: string
-              format: date-time
-            clinicURL:
-              type: string
     DbsReport:
       type: object
       properties:
@@ -1780,188 +1430,77 @@ components:
           format: date
         clinicURL:
           type: string
-    EventAuditReport:
+    CensusReport:
       type: object
       properties:
-        eventAudits:
+        patients:
           type: array
           items:
             type: object
             properties:
-              eventId:
+              clientFirstName:
                 type: string
-                format: uuid
-              eventName:
-                type: string
-              eventEncounter:
-                type: string
-                description: Encounter type name
-              startTime:
-                type: string
-                format: date-time
-              minutesAttended:
-                type: number
-              isGroup:
-                type: boolean
-              staff:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    uuid:
-                      type: string
-                    name:
-                      type: string
-                  required:
-                  - uuid
-                  - name
-                description: Staff attendee names
-              clients:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    uuid:
-                      type: string
-                    name:
-                      type: string
-                    mrn:
-                      type: string
-                    type:
-                      type: string
-                      enum:
-                      - patient
-                      - program
-                      - clinic team
-                  required:
-                  - uuid
-                  - name
-                  - type
-                description: Client attendee names
-              status:
-                type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-        users:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-    ProgramCensusReport:
-      type: object
-      properties:
-        censuses:
-          type: array
-          items:
-            type: object
-            properties:
-              programId:
-                type: string
-                format: uuid
-              program:
-                type: string
-              programLoc:
-                type: array
-                items:
-                  type: string
-              average:
-                type: number
-                description: Average daily census
-              startCount:
-                type: integer
-                description: Beginning census
-              endCount:
-                type: integer
-                description: Ending census
-              minCount:
-                type: integer
-                description: Minimum census during period
-              maxCount:
-                type: integer
-                description: Maximum census during period
-              archived:
-                type: boolean
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-    AdmissionsReport:
-      type: object
-      properties:
-        admissions:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                type: string
-                example: Admit
-              admitDate:
-                type: string
-                format: date-time
-              dischargeDate:
-                type:
-                - string
-                - 'null'
-                format: date-time
-              program:
-                type: string
-              programId:
-                type: string
-                format: uuid
-                description: Clinic program ID corresponding to the program name
-              levelOfCare:
-                type: string
-              referralType:
-                type: string
-              referralOrganization:
-                type: string
-              referralPointOfContact:
+              clientLastName:
                 type: string
               mrn:
                 type: string
-              name:
-                type: string
+              dob:
+                type:
+                - string
+                - 'null'
+                format: date
               age:
                 type: integer
+              clinicalProgramNames:
+                type: array
+                items:
+                  type: string
+              levelsOfCare:
+                type: array
+                items:
+                  type: string
+              nonClinicalProgramNames:
+                type: array
+                items:
+                  type: string
+              originalAdmitDate:
+                type: string
+                format: date-time
+              estimatedDischargeDates:
+                type:
+                - string
+                - 'null'
+                format: date
+              teamNames:
+                type: array
+                items:
+                  type: string
+              primaryEmail:
+                type: string
+              primaryPhone:
+                type: string
+              race:
+                type: array
+                items:
+                  type: string
+              ethnicity:
+                type: array
+                items:
+                  type: string
+              preferredLanguage:
+                type: string
               sex:
                 type: string
-              notes:
+              gender:
+                type: array
+                items:
+                  type: string
+              sexuality:
                 type: string
-              primaryClinician:
+              maritalStatus:
                 type: string
-              phoneUse:
+              payerType:
                 type: string
-              phoneNumber:
-                type: string
-              addressUse:
-                type: string
-              addressLine:
-                type: string
-              addressLine2:
-                type: string
-              addressCity:
-                type: string
-              addressRegion:
-                type: string
-              addressCountry:
-                type: string
-              addressPostalCode:
-                type: string
-              email:
-                type: string
-              notify:
-                type: boolean
-              portalEmail:
-                type: string
-              programLos:
-                type: integer
-                description: Length of stay in days
               payerName:
                 type: string
               insuranceStartDate:
@@ -1974,16 +1513,212 @@ components:
                 - string
                 - 'null'
                 format: date
+              primaryClinicianFirst:
+                type: string
+              primaryClinicianLast:
+                type: string
+              diagnoses:
+                type: array
+                items:
+                  type: string
+              allergies:
+                type: array
+                items:
+                  type: string
+              billingAddressUse:
+                type: string
+              billingAddressCountry:
+                type: string
+              billingAddressLine:
+                type: string
+              billingAddressLine2:
+                type: string
+              billingAddressCity:
+                type: string
+              billingAddressRegion:
+                type: string
+              billingAddressPostalCode:
+                type: string
+              billingAddressNotes:
+                type: string
+              emergencyContactName:
+                type: string
+              emergencyContactPhone:
+                type: string
+              emergencyContactEmail:
+                type: string
+        isBrief:
+          type: boolean
         startDate:
           type: string
           format: date-time
         endDate:
           type: string
           format: date-time
-        clinicURL:
+    AlosReport:
+      type: object
+      properties:
+        aloss:
+          type: array
+          items:
+            type: object
+            properties:
+              clientFirstName:
+                type: string
+              clientLastName:
+                type: string
+              currentStatus:
+                type: string
+              age:
+                type: integer
+              sex:
+                type: string
+              current:
+                type: string
+                description: X if currently in program
+              program:
+                type: string
+              programType:
+                type: string
+              programLoc:
+                type: string
+              programLos:
+                type: integer
+                description: Length of stay in days
+              admitDate:
+                type: string
+                format: date-time
+              dischargeDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              primaryClinician:
+                type: string
+        startDate:
           type: string
-        clinical:
-          type: boolean
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'
+    ClientEventHistoryReport:
+      type: object
+      properties:
+        Events:
+          type: array
+          items:
+            type: object
+            properties:
+              Date:
+                type: string
+                format: date-time
+              EventName:
+                type: string
+              StartTime:
+                type: string
+                format: date-time
+              EndTime:
+                type: string
+                format: date-time
+              TotalDuration:
+                type: number
+                description: Duration in minutes
+              Status:
+                type: string
+                description: Event status (Occurred, Scheduled, Canceled, OccurredNoEncounter)
+              AttendanceType:
+                type: string
+              Absent:
+                type: boolean
+              Billable:
+                type: boolean
+              BillableUnits:
+                type: integer
+              CancellationType:
+                type: string
+              Note:
+                type: string
+              PatientID:
+                type: string
+                format: uuid
+              FirstName:
+                type: string
+              LastName:
+                type: string
+              ProgramName:
+                type: string
+              LevelOfCare:
+                type: string
+              EncounterType:
+                type: string
+              IsGroup:
+                type: boolean
+        StartDate:
+          type: string
+          format: date-time
+        EndDate:
+          type: string
+          format: date-time
+    OrganizationNotesReport:
+      type: object
+      properties:
+        organizationNoteSet:
+          type: object
+          properties:
+            notes:
+              type: array
+              items:
+                type: object
+                properties:
+                  organizationId:
+                    type: string
+                    format: uuid
+                  organizationName:
+                    type: string
+                  primaryContactName:
+                    type: string
+                  noteTakenAt:
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  noteActivityType:
+                    type: string
+                  noteContent:
+                    type: string
+                  creator:
+                    type: string
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            clinicURL:
+              type: string
     DischargesReport:
       type: object
       properties:
@@ -2043,4 +1778,269 @@ components:
         clinicURL:
           type: string
         clinical:
+          type: boolean
+    ClientAttendanceByStatusReport:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              programName:
+                type: string
+              levelOfCare:
+                type: string
+              encounterType:
+                type: string
+              billable:
+                type: boolean
+              isGroup:
+                type: boolean
+              statusCounts:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Map of attendance type name to count
+              minutesAttended:
+                type: number
+              totalBillableUnits:
+                type: integer
+        attendanceTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              absent:
+                type: boolean
+              billable:
+                type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    DisqualifiedCasesReport:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            type: object
+            properties:
+              dealId:
+                type: string
+                format: uuid
+              dealName:
+                type: string
+              dealDisqualificationDate:
+                type: string
+                format: date-time
+              createdAt:
+                type: string
+                format: date-time
+              personSeekingTreatment:
+                type: string
+              dealContactNames:
+                type: string
+              referralPointOfContact:
+                type: string
+              referralOrganization:
+                type: string
+              referralOrganizationRelationshipOwners:
+                type: string
+              referralType:
+                type: string
+              dealSize:
+                type: integer
+                description: In cents
+              anticipatedPrograms:
+                type: array
+                items:
+                  type: string
+              referralSource:
+                type: string
+              caseSource:
+                type: string
+              dealOwner:
+                type: string
+              fundingSource:
+                type: string
+              payerGroupName:
+                type: string
+              payerName:
+                type: string
+              disqualificationReason:
+                type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+    CareTeamsReport:
+      type: object
+      properties:
+        careTeams:
+          type: array
+          items:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              mrn:
+                type: string
+              activeClinicalProgram:
+                type: string
+                description: Active clinical program name with level of care
+              admitDate:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              activeAdditionalServices:
+                type: string
+                description: Pipe-separated list of additional services
+              payer:
+                type: string
+              primaryClinician:
+                type: string
+              primaryClinicianRoles:
+                type: string
+                description: Comma-separated list of roles
+              clinician2Name:
+                type: string
+              clinician2Roles:
+                type: string
+              clinician3Name:
+                type: string
+              clinician3Roles:
+                type: string
+              clinician4Name:
+                type: string
+              clinician4Roles:
+                type: string
+              clinician5Name:
+                type: string
+              clinician5Roles:
+                type: string
+              clinician6Name:
+                type: string
+              clinician6Roles:
+                type: string
+              clinician7Name:
+                type: string
+              clinician7Roles:
+                type: string
+              clinician8Name:
+                type: string
+              clinician8Roles:
+                type: string
+              clinician9Name:
+                type: string
+              clinician9Roles:
+                type: string
+              clinician10Name:
+                type: string
+              clinician10Roles:
+                type: string
+    EncounterHistoryReport:
+      type: object
+      properties:
+        encounters:
+          type: array
+          items:
+            type: object
+            properties:
+              encounterID:
+                type: string
+                format: uuid
+              patientID:
+                type: string
+                format: uuid
+              firstName:
+                type: string
+              lastName:
+                type: string
+              mrn:
+                type: string
+              program:
+                type: string
+                description: Current clinical program name
+              programLoc:
+                type: string
+                description: Level of care
+              encounterType:
+                type: string
+              isGroup:
+                type: boolean
+              isBilling:
+                type: boolean
+              encounterCreator:
+                type: string
+              supervisingProvider:
+                type: string
+              status:
+                type: string
+                enum:
+                - Pending
+                - In Progress
+                - Scheduled
+                - Complete
+                - Incomplete
+                - Cancelled
+              startTime:
+                type: string
+                format: date-time
+              endTime:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              attendanceType:
+                type: string
+              fundingSource:
+                type: string
+              primaryInsurancePayer:
+                type: string
+              minutesAttended:
+                type: number
+              groupEncounterID:
+                type:
+                - string
+                - 'null'
+                format: uuid
+              groupTitle:
+                type: string
+              modifiers:
+                type: array
+                items:
+                  type: string
+              completedForms:
+                type: integer
+              incompleteForms:
+                type: integer
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        clinicURL:
+          type: string
+        supervisingProvidersEnabled:
           type: boolean

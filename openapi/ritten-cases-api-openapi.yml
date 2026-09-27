@@ -241,6 +241,78 @@ paths:
           description: Case not found
 components:
   schemas:
+    PostCaseActionItemBody:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          description: The description of the action item
+          example: Call the referral source to confirm insurance
+    ListCases:
+      type: array
+      items:
+        $ref: '#/components/schemas/Case'
+    PatchCaseBody:
+      type: object
+      properties:
+        caseName:
+          type: string
+          description: Name of the case
+          example: John Doe
+        personSeekingTreatmentId:
+          type: string
+          format: uuid
+          description: ID of the person seeking treatment
+        caseOwnerId:
+          type: string
+          format: uuid
+          description: ID of the staff member who owns this case
+        contactIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of contacts associated with this case (replaces existing)
+        caseSource:
+          type: string
+          description: Name of the case source (must match an existing case source)
+          example: Website
+        caseSizeCents:
+          type: integer
+          minimum: 0
+          description: Case value in cents
+          example: 10000
+        potentialAdmitDate:
+          type: string
+          format: date-time
+          description: Potential admission date (ISO 8601)
+          example: '2024-01-01T00:00:00Z'
+        followUpDate:
+          type: string
+          format: date-time
+          description: Follow-up date (ISO 8601)
+          example: '2024-01-15T00:00:00Z'
+        potentialProgramIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of potential programs for this case (replaces existing)
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tag names to apply to the case (replaces existing tags, must match existing tags)
+          example:
+          - urgent
+          - self-referral
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation date (must be in the past)
+          example: '2024-01-01T00:00:00Z'
     Program:
       type: object
       properties:
@@ -254,6 +326,36 @@ components:
         programType:
           type: string
           example: clinical
+    CaseActionItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        caseId:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        content:
+          type: string
+          example: Call the referral source to confirm insurance
+        isComplete:
+          type: boolean
+          example: false
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        completedBy:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
     CaseNote:
       type: object
       properties:
@@ -274,29 +376,29 @@ components:
           example: '2024-01-01T00:00:00Z'
         owner:
           $ref: '#/components/schemas/User'
-    PostCaseActionItemBody:
+    User:
       type: object
-      required:
-      - content
       properties:
-        content:
+        id:
           type: string
-          description: The description of the action item
-          example: Call the referral source to confirm insurance
-    PostCaseNoteBody:
-      type: object
-      required:
-      - note
-      properties:
-        note:
-          type: string
-          description: The plain-text content of the note
-          example: Patient called to confirm intake appointment
-        userId:
-          type: string
-          format: uuid
-          description: Optional ID of the user who wrote the note
           example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        email:
+          type: string
+          example: johndoe@ritclinic.ritten.io
+        first:
+          type: string
+          example: Doe
+        middle:
+          type: string
+        last:
+          type: string
+          example: John
+        lastAccessedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
+          example: '2024-01-15T14:32:00Z'
     PostCaseBody:
       type: object
       required:
@@ -358,33 +460,20 @@ components:
           format: date-time
           description: Creation date (must be in the past, defaults to today if not provided)
           example: '2024-01-01T00:00:00Z'
-    ListCases:
-      type: array
-      items:
-        $ref: '#/components/schemas/Case'
-    User:
+    PostCaseNoteBody:
       type: object
+      required:
+      - note
       properties:
-        id:
+        note:
           type: string
+          description: The plain-text content of the note
+          example: Patient called to confirm intake appointment
+        userId:
+          type: string
+          format: uuid
+          description: Optional ID of the user who wrote the note
           example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        email:
-          type: string
-          example: johndoe@ritclinic.ritten.io
-        first:
-          type: string
-          example: Doe
-        middle:
-          type: string
-        last:
-          type: string
-          example: John
-        lastAccessedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
-          example: '2024-01-15T14:32:00Z'
     CaseContact:
       type: object
       description: 'A contact as it appears on a case. Deliberately narrower than the Contact returned by
@@ -415,36 +504,6 @@ components:
           type: string
           format: date-time
           description: Contact record creation timestamp.
-          example: '2024-01-01T00:00:00Z'
-    CaseActionItem:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        caseId:
-          type: string
-          format: uuid
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        content:
-          type: string
-          example: Call the referral source to confirm insurance
-        isComplete:
-          type: boolean
-          example: false
-        completedAt:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-        completedBy:
-          allOf:
-          - $ref: '#/components/schemas/User'
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
           example: '2024-01-01T00:00:00Z'
     Case:
       type: object
@@ -493,62 +552,3 @@ components:
           type: array
           items:
             type: string
-    PatchCaseBody:
-      type: object
-      properties:
-        caseName:
-          type: string
-          description: Name of the case
-          example: John Doe
-        personSeekingTreatmentId:
-          type: string
-          format: uuid
-          description: ID of the person seeking treatment
-        caseOwnerId:
-          type: string
-          format: uuid
-          description: ID of the staff member who owns this case
-        contactIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of contacts associated with this case (replaces existing)
-        caseSource:
-          type: string
-          description: Name of the case source (must match an existing case source)
-          example: Website
-        caseSizeCents:
-          type: integer
-          minimum: 0
-          description: Case value in cents
-          example: 10000
-        potentialAdmitDate:
-          type: string
-          format: date-time
-          description: Potential admission date (ISO 8601)
-          example: '2024-01-01T00:00:00Z'
-        followUpDate:
-          type: string
-          format: date-time
-          description: Follow-up date (ISO 8601)
-          example: '2024-01-15T00:00:00Z'
-        potentialProgramIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of potential programs for this case (replaces existing)
-        tags:
-          type: array
-          items:
-            type: string
-          description: Tag names to apply to the case (replaces existing tags, must match existing tags)
-          example:
-          - urgent
-          - self-referral
-        createdAt:
-          type: string
-          format: date-time
-          description: Creation date (must be in the past)
-          example: '2024-01-01T00:00:00Z'

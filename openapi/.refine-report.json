@@ -20,17 +20,14 @@
     "ritten-users-api-openapi.yml",
     "ritten-webhooks-api-openapi.yml"
   ],
-  "archived": [
-    "deleted 1 superseded output(s) from the previous generation"
-  ],
+  "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
     "1 archived document(s) dropped as subsets of other archived documents",
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "ritten-external-api-openapi-original.yaml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "superseded outputs removed: ritten-o-auth-api-openapi.yml",
-    "apis.yml register: written (+1 apis, 15 total)"
+    "apis.yml register: already-registered"
   ],
   "skipped": [
     "_original/ritten-external-api-openapi.yaml: archived document superseded by a larger archived document",
@@ -42,7 +39,7 @@
     "ritten-forms-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "ritten-insights-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "ritten-insurance-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "ritten-o-auth-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "ritten-oauth-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "ritten-organizations-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "ritten-patients-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "ritten-programs-api-openapi.yml: previously refined output, superseded by openapi/_original/",

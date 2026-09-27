@@ -130,16 +130,6 @@ paths:
           description: Facility not found
 components:
   schemas:
-    PatchFacilityBody:
-      type: object
-      additionalProperties: false
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Facility name. Leading and trailing whitespace is trimmed.
-          example: Ritten Recovery Center
     Address:
       type: object
       properties:
@@ -166,6 +156,16 @@ components:
           description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
         postalCode:
           type: string
+    PatchFacilityBody:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Facility name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
     Facility:
       type: object
       properties:
@@ -209,22 +209,6 @@ components:
           example: 555-555-5555
         address:
           $ref: '#/components/schemas/PostFacilityAddress'
-    ListFacilities:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        facilities:
-          type: array
-          items:
-            $ref: '#/components/schemas/Facility'
     PostFacilityAddress:
       type: object
       required:
@@ -256,3 +240,19 @@ components:
           type: string
           description: IANA timezone identifier.
           example: America/New_York
+    ListFacilities:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        facilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facility'

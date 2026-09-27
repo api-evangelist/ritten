@@ -1,6 +1,6 @@
 openapi: 3.2.0
 info:
-  title: External OAUTH API
+  title: External OAuth API
   x-logo:
     url: https://storage.googleapis.com/ritten-ops-public-logos/rittenBanner
     backgroundColor: '#FFFFFF'
@@ -129,27 +129,6 @@ paths:
                 $ref: '#/components/schemas/OAuthErrorResponse'
 components:
   schemas:
-    OAuthTokenResponse:
-      type: object
-      required:
-      - access_token
-      - token_type
-      - expires_in
-      properties:
-        access_token:
-          type: string
-          description: The access token to use as a `Bearer` token on subsequent API calls.
-        token_type:
-          type: string
-          example: Bearer
-        expires_in:
-          type: integer
-          format: int64
-          description: Token lifetime in seconds (currently 86400 / 24h).
-          example: 86400
-        scope:
-          type: string
-          description: Space-separated list of granted scopes (may be empty).
     OAuthTokenRequest:
       type: object
       required:
@@ -182,6 +161,27 @@ components:
 
             '
           example: https://external-api.ritten.io
+    OAuthTokenResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      properties:
+        access_token:
+          type: string
+          description: The access token to use as a `Bearer` token on subsequent API calls.
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          format: int64
+          description: Token lifetime in seconds (currently 86400 / 24h).
+          example: 86400
+        scope:
+          type: string
+          description: Space-separated list of granted scopes (may be empty).
     OAuthErrorResponse:
       type: object
       required:
