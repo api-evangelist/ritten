@@ -188,6 +188,89 @@ components:
           type: string
           format: uuid
           description: Active facility ID to associate with the program.
+    LevelOfCare:
+      type: string
+      enum:
+      - Early Intervention (0.5)
+      - Outpatient Services (1.0)
+      - Long-Term Remission Monitoring (1.0)
+      - Outpatient Therapy (1.5)
+      - Medically Managed Outpatient (1.7)
+      - IOP/PHP - General (2)
+      - IOP (2.1)
+      - HIOP (High-Intensity Outpatient) (2.5)
+      - PHP (2.5)
+      - Medically Managed Intensive Outpatient (2.7)
+      - Residential - General (3)
+      - Clinically Managed Low-Intensity Residential Services (3.1)
+      - Clinically Managed Population-Specific High-Intensity Services (3.2)
+      - Clinically Managed High-Intensity Residential Services (3.5)
+      - Medically Monitored Intensive Inpatient Services (3.7)
+      - Medically Managed Residential (3.7)
+      - Medically Managed Intensive Inpatient Services (4)
+      - Ambulatory Detox Without Extended Onsite Monitoring (I-D)
+      - Ambulatory Detox With Extended Onsite Monitoring (II-D)
+      - Clinically Managed Residential Detoxification (III.2-D)
+      - Medically Monitored Inpatient Detoxification (III.7-D)
+      - Medically Managed Intensive Inpatient Detoxification (IV-D)
+      - Sober Living
+      - Recovery Residence
+      - Case Management
+      - Monitoring / Drug Testing
+      - Peer Support
+      - Advisory Services
+      - Medication Management
+      - Other
+      - Other - Clinical
+      - Level 3 (3)
+      - Significant Treatment (3)
+      - Level 4 (4)
+      - Level 5 (5)
+    ClinicProgram:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        name:
+          type: string
+          example: Residential
+        facility:
+          anyOf:
+          - $ref: '#/components/schemas/ProgramFacility'
+          - type: 'null'
+        programType:
+          $ref: '#/components/schemas/ProgramType'
+        levelOfCare:
+          type: array
+          items:
+            $ref: '#/components/schemas/LevelOfCare'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    ListPrograms:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicProgram'
+    ProgramType:
+      type: string
+      enum:
+      - Clinical
+      - Additional Service
     PostProgramBody:
       type: object
       additionalProperties: false
@@ -228,92 +311,9 @@ components:
             '
           items:
             $ref: '#/components/schemas/LevelOfCare'
-    ClinicProgram:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        name:
-          type: string
-          example: Residential
-        facility:
-          anyOf:
-          - $ref: '#/components/schemas/ProgramFacility'
-          - type: 'null'
-        programType:
-          $ref: '#/components/schemas/ProgramType'
-        levelOfCare:
-          type: array
-          items:
-            $ref: '#/components/schemas/LevelOfCare'
-        createdAt:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00Z'
-    ProgramType:
-      type: string
-      enum:
-      - Clinical
-      - Additional Service
-    ListPrograms:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        programs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClinicProgram'
     ProgramFacility:
       type: object
       properties:
         id:
           type: string
           format: uuid
-    LevelOfCare:
-      type: string
-      enum:
-      - Early Intervention (0.5)
-      - Outpatient Services (1.0)
-      - Long-Term Remission Monitoring (1.0)
-      - Outpatient Therapy (1.5)
-      - Medically Managed Outpatient (1.7)
-      - IOP/PHP - General (2)
-      - IOP (2.1)
-      - HIOP (High-Intensity Outpatient) (2.5)
-      - PHP (2.5)
-      - Medically Managed Intensive Outpatient (2.7)
-      - Residential - General (3)
-      - Clinically Managed Low-Intensity Residential Services (3.1)
-      - Clinically Managed Population-Specific High-Intensity Services (3.2)
-      - Clinically Managed High-Intensity Residential Services (3.5)
-      - Medically Monitored Intensive Inpatient Services (3.7)
-      - Medically Managed Residential (3.7)
-      - Medically Managed Intensive Inpatient Services (4)
-      - Ambulatory Detox Without Extended Onsite Monitoring (I-D)
-      - Ambulatory Detox With Extended Onsite Monitoring (II-D)
-      - Clinically Managed Residential Detoxification (III.2-D)
-      - Medically Monitored Inpatient Detoxification (III.7-D)
-      - Medically Managed Intensive Inpatient Detoxification (IV-D)
-      - Sober Living
-      - Recovery Residence
-      - Case Management
-      - Monitoring / Drug Testing
-      - Peer Support
-      - Advisory Services
-      - Medication Management
-      - Other
-      - Other - Clinical
-      - Level 3 (3)
-      - Significant Treatment (3)
-      - Level 4 (4)
-      - Level 5 (5)

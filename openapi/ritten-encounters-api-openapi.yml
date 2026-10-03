@@ -96,6 +96,40 @@ paths:
                   $ref: '#/components/schemas/EncounterType'
 components:
   schemas:
+    AttendanceType:
+      type: string
+      description: Attendance status of an encounter. Defaults to Attended when omitted at creation.
+      enum:
+      - Attended
+      - AttendedNotBillable
+      - AbsentExcused
+      - AbsentNotExcused
+      - AbsentUnknown
+      - AbsentBillable
+    PostEncounterBody:
+      type: object
+      additionalProperties: false
+      description: 'External create contract for encounters. The server assigns the encounter ID and start time on create.
+
+        '
+      required:
+      - patientId
+      - encounterTypeId
+      example:
+        patientId: d3f2c9a1-8b47-4e0f-a2c9-53f7f0c1b2aa
+        encounterTypeId: 0b6a1f6e-2f9a-4c56-9d1c-6a3f6f9d2e11
+        attendanceType: Attended
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          description: ID of the patient to create the encounter for.
+        encounterTypeId:
+          type: string
+          format: uuid
+          description: ID of the encounter type to create the encounter from. Use `GET /encounter-types` to discover types.
+        attendanceType:
+          $ref: '#/components/schemas/AttendanceType'
     EncounterType:
       type: object
       properties:
@@ -159,37 +193,3 @@ components:
           type: string
           format: date-time
           example: '2024-01-01T00:00:00Z'
-    AttendanceType:
-      type: string
-      description: Attendance status of an encounter. Defaults to Attended when omitted at creation.
-      enum:
-      - Attended
-      - AttendedNotBillable
-      - AbsentExcused
-      - AbsentNotExcused
-      - AbsentUnknown
-      - AbsentBillable
-    PostEncounterBody:
-      type: object
-      additionalProperties: false
-      description: 'External create contract for encounters. The server assigns the encounter ID and start time on create.
-
-        '
-      required:
-      - patientId
-      - encounterTypeId
-      example:
-        patientId: d3f2c9a1-8b47-4e0f-a2c9-53f7f0c1b2aa
-        encounterTypeId: 0b6a1f6e-2f9a-4c56-9d1c-6a3f6f9d2e11
-        attendanceType: Attended
-      properties:
-        patientId:
-          type: string
-          format: uuid
-          description: ID of the patient to create the encounter for.
-        encounterTypeId:
-          type: string
-          format: uuid
-          description: ID of the encounter type to create the encounter from. Use `GET /encounter-types` to discover types.
-        attendanceType:
-          $ref: '#/components/schemas/AttendanceType'

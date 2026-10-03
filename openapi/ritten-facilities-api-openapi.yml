@@ -130,6 +130,22 @@ paths:
           description: Facility not found
 components:
   schemas:
+    ListFacilities:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        facilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facility'
     Address:
       type: object
       properties:
@@ -156,6 +172,28 @@ components:
           description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
         postalCode:
           type: string
+    PostFacilityBody:
+      type: object
+      required:
+      - name
+      - nationalProviderId
+      - phone
+      - address
+      properties:
+        name:
+          type: string
+          description: Facility name.
+          example: Ritten Recovery Center
+        nationalProviderId:
+          type: string
+          description: National Provider Identifier (NPI)
+          example: '1234567890'
+        phone:
+          type: string
+          description: Primary facility phone number
+          example: 555-555-5555
+        address:
+          $ref: '#/components/schemas/PostFacilityAddress'
     PatchFacilityBody:
       type: object
       additionalProperties: false
@@ -187,28 +225,6 @@ components:
           type: string
           format: date-time
           example: '2024-01-01T00:00:00Z'
-    PostFacilityBody:
-      type: object
-      required:
-      - name
-      - nationalProviderId
-      - phone
-      - address
-      properties:
-        name:
-          type: string
-          description: Facility name.
-          example: Ritten Recovery Center
-        nationalProviderId:
-          type: string
-          description: National Provider Identifier (NPI)
-          example: '1234567890'
-        phone:
-          type: string
-          description: Primary facility phone number
-          example: 555-555-5555
-        address:
-          $ref: '#/components/schemas/PostFacilityAddress'
     PostFacilityAddress:
       type: object
       required:
@@ -240,19 +256,3 @@ components:
           type: string
           description: IANA timezone identifier.
           example: America/New_York
-    ListFacilities:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        facilities:
-          type: array
-          items:
-            $ref: '#/components/schemas/Facility'

@@ -242,32 +242,6 @@ paths:
           description: Invalid payload supplied
 components:
   schemas:
-    Address:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        use:
-          type: string
-          enum:
-          - HOME
-          - WORK
-          - OTHER
-        country:
-          type: string
-          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
-        line:
-          type: string
-        line2:
-          type: string
-        city:
-          type: string
-        region:
-          type: string
-          description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
-        postalCode:
-          type: string
     Contact:
       type: object
       properties:
@@ -303,38 +277,32 @@ components:
           description: Organizations this contact is associated with. Omitted when they belong to none.
           items:
             $ref: '#/components/schemas/ContactOrganization'
-    ContactOrganization:
+    Address:
       type: object
-      description: An organization a contact is associated with.
       properties:
         id:
           type: string
-          format: uuid
-          description: The organization's ID. Pass to GET /organizations/{id} for the full record.
-          example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
-        name:
-          type: string
-          example: Sunrise Recovery Center
-        relationshipType:
-          type: string
-          description: How the contact relates to the organization. Omitted when unset.
-          example: member
-        isPrimary:
-          type: boolean
-          description: Whether this is the contact's primary organization.
-    ListContacts:
-      type: array
-      items:
-        $ref: '#/components/schemas/Contact'
-    ContactRelationship:
-      type: object
-      properties:
-        personId:
-          type: string
           example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        type:
+        use:
           type: string
-          description: The type of relationship
+          enum:
+          - HOME
+          - WORK
+          - OTHER
+        country:
+          type: string
+          description: Country code or name. US variants (e.g., "US", "USA", "United States") are normalized to "US".
+        line:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+          description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
+        postalCode:
+          type: string
     ContactPoint:
       type: object
       properties:
@@ -363,6 +331,19 @@ components:
           type: boolean
         notes:
           type: string
+    ContactRelationship:
+      type: object
+      properties:
+        personId:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        type:
+          type: string
+          description: The type of relationship
+    ListContacts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Contact'
     ContactDetail:
       allOf:
       - $ref: '#/components/schemas/Contact'
@@ -374,3 +355,22 @@ components:
               $ref: '#/components/schemas/ContactPoint'
           address:
             $ref: '#/components/schemas/Address'
+    ContactOrganization:
+      type: object
+      description: An organization a contact is associated with.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The organization's ID. Pass to GET /organizations/{id} for the full record.
+          example: 9a5e64b0-0a73-4cb5-ab32-44fea16da4e1
+        name:
+          type: string
+          example: Sunrise Recovery Center
+        relationshipType:
+          type: string
+          description: How the contact relates to the organization. Omitted when unset.
+          example: member
+        isPrimary:
+          type: boolean
+          description: Whether this is the contact's primary organization.

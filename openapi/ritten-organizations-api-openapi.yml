@@ -263,6 +263,48 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Organization'
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization, if any.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    OrganizationMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Organization-person relationship ID.
+        personId:
+          type: string
+          format: uuid
+        first:
+          type: string
+          example: Jane
+        last:
+          type: string
+          example: Doe
     PostOrganizationAddress:
       type: object
       properties:
@@ -289,6 +331,43 @@ components:
         notes:
           type: string
           example: Main admissions office
+    PatchOrganizationBody:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Organization name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+    ListOrganizationMembers:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMember'
     PostOrganizationBody:
       type: object
       additionalProperties: false
@@ -328,82 +407,3 @@ components:
           type: string
           format: uuid
           description: Person to set as the organization's primary contact.
-    ListOrganizationMembers:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        members:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrganizationMember'
-    PatchOrganizationBody:
-      type: object
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-          description: Organization name. Leading and trailing whitespace is trimmed.
-          example: Ritten Recovery Center
-        typeId:
-          type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
-          type: string
-          format: uuid
-          description: User assigned to the organization.
-        website:
-          type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
-    OrganizationMember:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Organization-person relationship ID.
-        personId:
-          type: string
-          format: uuid
-        first:
-          type: string
-          example: Jane
-        last:
-          type: string
-          example: Doe
-    Organization:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: Ritten Recovery Center
-        typeId:
-          type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
-          type: string
-          format: uuid
-          description: User assigned to the organization, if any.
-        website:
-          type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
-        createdAt:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00Z'

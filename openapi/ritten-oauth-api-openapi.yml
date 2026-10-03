@@ -129,6 +129,23 @@ paths:
                 $ref: '#/components/schemas/OAuthErrorResponse'
 components:
   schemas:
+    OAuthErrorResponse:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          description: 'OAuth 2.0 error code. Common values: `invalid_request`,
+
+            `unsupported_grant_type`, `invalid_audience`, `invalid_client`,
+
+            `bad_gateway`, `rate_limit_exceeded`.
+
+            '
+        error_description:
+          type: string
+          description: Human-readable explanation of the error.
     OAuthTokenRequest:
       type: object
       required:
@@ -182,20 +199,3 @@ components:
         scope:
           type: string
           description: Space-separated list of granted scopes (may be empty).
-    OAuthErrorResponse:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: string
-          description: 'OAuth 2.0 error code. Common values: `invalid_request`,
-
-            `unsupported_grant_type`, `invalid_audience`, `invalid_client`,
-
-            `bad_gateway`, `rate_limit_exceeded`.
-
-            '
-        error_description:
-          type: string
-          description: Human-readable explanation of the error.
