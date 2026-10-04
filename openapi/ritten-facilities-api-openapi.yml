@@ -146,6 +146,59 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Facility'
+    Facility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        nationalProviderId:
+          type: string
+          description: National Provider Identifier (NPI)
+        phone:
+          type: string
+          description: Primary facility phone number
+          example: '+15555555555'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+    PatchFacilityBody:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Facility name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+    PostFacilityBody:
+      type: object
+      required:
+      - name
+      - nationalProviderId
+      - phone
+      - address
+      properties:
+        name:
+          type: string
+          description: Facility name.
+          example: Ritten Recovery Center
+        nationalProviderId:
+          type: string
+          description: National Provider Identifier (NPI)
+          example: '1234567890'
+        phone:
+          type: string
+          description: Primary facility phone number
+          example: 555-555-5555
+        address:
+          $ref: '#/components/schemas/PostFacilityAddress'
     Address:
       type: object
       properties:
@@ -172,59 +225,6 @@ components:
           description: For US addresses, must be a valid 2-letter US state/territory code (e.g., "CA", "NY"). Common variants such as full state names and case variations are automatically normalized. For non-US addresses, accepts free-text state/province/region.
         postalCode:
           type: string
-    PostFacilityBody:
-      type: object
-      required:
-      - name
-      - nationalProviderId
-      - phone
-      - address
-      properties:
-        name:
-          type: string
-          description: Facility name.
-          example: Ritten Recovery Center
-        nationalProviderId:
-          type: string
-          description: National Provider Identifier (NPI)
-          example: '1234567890'
-        phone:
-          type: string
-          description: Primary facility phone number
-          example: 555-555-5555
-        address:
-          $ref: '#/components/schemas/PostFacilityAddress'
-    PatchFacilityBody:
-      type: object
-      additionalProperties: false
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Facility name. Leading and trailing whitespace is trimmed.
-          example: Ritten Recovery Center
-    Facility:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        address:
-          $ref: '#/components/schemas/Address'
-        nationalProviderId:
-          type: string
-          description: National Provider Identifier (NPI)
-        phone:
-          type: string
-          description: Primary facility phone number
-          example: '+15555555555'
-        createdAt:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00Z'
     PostFacilityAddress:
       type: object
       required:

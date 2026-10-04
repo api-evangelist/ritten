@@ -170,62 +170,6 @@ paths:
           description: Program not found, or referenced facility not found or archived
 components:
   schemas:
-    PatchProgramBody:
-      type: object
-      additionalProperties: false
-      minProperties: 1
-      description: 'Partial update body. At least one of name or facilityId must be provided.
-
-        Omitted fields are left unchanged; programType and levelOfCare are not patchable.
-
-        '
-      properties:
-        name:
-          type: string
-          description: Program name. Leading and trailing whitespace is trimmed.
-          example: Residential
-        facilityId:
-          type: string
-          format: uuid
-          description: Active facility ID to associate with the program.
-    LevelOfCare:
-      type: string
-      enum:
-      - Early Intervention (0.5)
-      - Outpatient Services (1.0)
-      - Long-Term Remission Monitoring (1.0)
-      - Outpatient Therapy (1.5)
-      - Medically Managed Outpatient (1.7)
-      - IOP/PHP - General (2)
-      - IOP (2.1)
-      - HIOP (High-Intensity Outpatient) (2.5)
-      - PHP (2.5)
-      - Medically Managed Intensive Outpatient (2.7)
-      - Residential - General (3)
-      - Clinically Managed Low-Intensity Residential Services (3.1)
-      - Clinically Managed Population-Specific High-Intensity Services (3.2)
-      - Clinically Managed High-Intensity Residential Services (3.5)
-      - Medically Monitored Intensive Inpatient Services (3.7)
-      - Medically Managed Residential (3.7)
-      - Medically Managed Intensive Inpatient Services (4)
-      - Ambulatory Detox Without Extended Onsite Monitoring (I-D)
-      - Ambulatory Detox With Extended Onsite Monitoring (II-D)
-      - Clinically Managed Residential Detoxification (III.2-D)
-      - Medically Monitored Inpatient Detoxification (III.7-D)
-      - Medically Managed Intensive Inpatient Detoxification (IV-D)
-      - Sober Living
-      - Recovery Residence
-      - Case Management
-      - Monitoring / Drug Testing
-      - Peer Support
-      - Advisory Services
-      - Medication Management
-      - Other
-      - Other - Clinical
-      - Level 3 (3)
-      - Significant Treatment (3)
-      - Level 4 (4)
-      - Level 5 (5)
     ClinicProgram:
       type: object
       properties:
@@ -250,27 +194,12 @@ components:
           type: string
           format: date-time
           example: '2024-01-01T00:00:00Z'
-    ListPrograms:
+    ProgramFacility:
       type: object
       properties:
-        meta:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            totalCount:
-              type: integer
-              example: 10
-        programs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClinicProgram'
-    ProgramType:
-      type: string
-      enum:
-      - Clinical
-      - Additional Service
+        id:
+          type: string
+          format: uuid
     PostProgramBody:
       type: object
       additionalProperties: false
@@ -311,9 +240,80 @@ components:
             '
           items:
             $ref: '#/components/schemas/LevelOfCare'
-    ProgramFacility:
+    LevelOfCare:
+      type: string
+      enum:
+      - Early Intervention (0.5)
+      - Outpatient Services (1.0)
+      - Long-Term Remission Monitoring (1.0)
+      - Outpatient Therapy (1.5)
+      - Medically Managed Outpatient (1.7)
+      - IOP/PHP - General (2)
+      - IOP (2.1)
+      - HIOP (High-Intensity Outpatient) (2.5)
+      - PHP (2.5)
+      - Medically Managed Intensive Outpatient (2.7)
+      - Residential - General (3)
+      - Clinically Managed Low-Intensity Residential Services (3.1)
+      - Clinically Managed Population-Specific High-Intensity Services (3.2)
+      - Clinically Managed High-Intensity Residential Services (3.5)
+      - Medically Monitored Intensive Inpatient Services (3.7)
+      - Medically Managed Residential (3.7)
+      - Medically Managed Intensive Inpatient Services (4)
+      - Ambulatory Detox Without Extended Onsite Monitoring (I-D)
+      - Ambulatory Detox With Extended Onsite Monitoring (II-D)
+      - Clinically Managed Residential Detoxification (III.2-D)
+      - Medically Monitored Inpatient Detoxification (III.7-D)
+      - Medically Managed Intensive Inpatient Detoxification (IV-D)
+      - Sober Living
+      - Recovery Residence
+      - Case Management
+      - Monitoring / Drug Testing
+      - Peer Support
+      - Advisory Services
+      - Medication Management
+      - Other
+      - Other - Clinical
+      - Level 3 (3)
+      - Significant Treatment (3)
+      - Level 4 (4)
+      - Level 5 (5)
+    ProgramType:
+      type: string
+      enum:
+      - Clinical
+      - Additional Service
+    ListPrograms:
       type: object
       properties:
-        id:
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            totalCount:
+              type: integer
+              example: 10
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicProgram'
+    PatchProgramBody:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'Partial update body. At least one of name or facilityId must be provided.
+
+        Omitted fields are left unchanged; programType and levelOfCare are not patchable.
+
+        '
+      properties:
+        name:
+          type: string
+          description: Program name. Leading and trailing whitespace is trimmed.
+          example: Residential
+        facilityId:
           type: string
           format: uuid
+          description: Active facility ID to associate with the program.

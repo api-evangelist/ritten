@@ -194,26 +194,6 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    ClinicTeam:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        name:
-          type: string
-          example: Cool Team
-        userIds:
-          type: array
-          items:
-            type: string
-            example: f87e1b07-1d20-4c36-8c37-08600daf7322
-    IDSchema:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
     User:
       type: object
       properties:
@@ -237,3 +217,23 @@ components:
           nullable: true
           description: Timestamp of the user's most recent app session start (set when the user loads the app). Null if the user has never logged in.
           example: '2024-01-15T14:32:00Z'
+    ClinicTeam:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        name:
+          type: string
+          example: Cool Team
+        userIds:
+          type: array
+          items:
+            type: string
+            example: f87e1b07-1d20-4c36-8c37-08600daf7322
+    IDSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf

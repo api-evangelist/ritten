@@ -247,7 +247,7 @@ paths:
           description: Organization not found
 components:
   schemas:
-    ListOrganizations:
+    ListOrganizationMembers:
       type: object
       properties:
         meta:
@@ -259,36 +259,10 @@ components:
             totalCount:
               type: integer
               example: 10
-        organizations:
+        members:
           type: array
           items:
-            $ref: '#/components/schemas/Organization'
-    Organization:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: Ritten Recovery Center
-        typeId:
-          type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
-          type: string
-          format: uuid
-          description: User assigned to the organization, if any.
-        website:
-          type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
-        createdAt:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00Z'
+            $ref: '#/components/schemas/OrganizationMember'
     OrganizationMember:
       type: object
       properties:
@@ -305,6 +279,27 @@ components:
         last:
           type: string
           example: Doe
+    PatchOrganizationBody:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Organization name. Leading and trailing whitespace is trimmed.
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
     PostOrganizationAddress:
       type: object
       properties:
@@ -331,28 +326,7 @@ components:
         notes:
           type: string
           example: Main admissions office
-    PatchOrganizationBody:
-      type: object
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-          description: Organization name. Leading and trailing whitespace is trimmed.
-          example: Ritten Recovery Center
-        typeId:
-          type: string
-          format: uuid
-          description: Organization type ID.
-        assignedUserId:
-          type: string
-          format: uuid
-          description: User assigned to the organization.
-        website:
-          type: string
-          format: uri
-          description: Organization website URL.
-          example: https://example.com
-    ListOrganizationMembers:
+    ListOrganizations:
       type: object
       properties:
         meta:
@@ -364,10 +338,10 @@ components:
             totalCount:
               type: integer
               example: 10
-        members:
+        organizations:
           type: array
           items:
-            $ref: '#/components/schemas/OrganizationMember'
+            $ref: '#/components/schemas/Organization'
     PostOrganizationBody:
       type: object
       additionalProperties: false
@@ -407,3 +381,29 @@ components:
           type: string
           format: uuid
           description: Person to set as the organization's primary contact.
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ritten Recovery Center
+        typeId:
+          type: string
+          format: uuid
+          description: Organization type ID.
+        assignedUserId:
+          type: string
+          format: uuid
+          description: User assigned to the organization, if any.
+        website:
+          type: string
+          format: uri
+          description: Organization website URL.
+          example: https://example.com
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'

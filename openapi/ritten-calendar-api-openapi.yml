@@ -123,6 +123,25 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    CalendarEventCore:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+        title:
+          type: string
+          example: Therapy Appointment
+        description:
+          type: string
+        location:
+          type: string
+        startTime:
+          type: string
+          example: '2024-02-13T13:00:00-05:00'
+        endTime:
+          type: string
+          example: '2024-02-13T13:00:00-05:00'
     CalendarEvent:
       allOf:
       - $ref: '#/components/schemas/CalendarEventCore'
@@ -155,25 +174,6 @@ components:
             - string
             - 'null'
             example: '2024-02-13T13:00:00-05:00'
-    CalendarEventCore:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 182c2e54-3494-4b85-aba5-038cf539d5bf
-        title:
-          type: string
-          example: Therapy Appointment
-        description:
-          type: string
-        location:
-          type: string
-        startTime:
-          type: string
-          example: '2024-02-13T13:00:00-05:00'
-        endTime:
-          type: string
-          example: '2024-02-13T13:00:00-05:00'
     CalendarEventInterval:
       type:
       - string
