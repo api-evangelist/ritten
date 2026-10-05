@@ -1,0 +1,12 @@
+{
+ "url": "https://docs.ritten.io/swagger/openapi.yaml",
+ "requested_url": "https://docs.ritten.io/swagger/openapi.yaml",
+ "status": 200,
+ "content_type": "application/octet-stream",
+ "bytes": 211983,
+ "sha256": "b14f044091d8a40a89735d3b30a929641b55fc148e09e56bf5d6ae4c8fb74c77",
+ "fetched_at": "2026-10-04",
+ "fetched_by": "APIEvangelist-Harvest/1.0 (+https://apievangelist.com)",
+ "match": "equivalent",
+ "note": "Re-fetched from the provider by verify-openapi-sources.py; the provider's current document describes the same operations (Jaccard 0.906), but the bytes differ, so the archive is an earlier or reformatted copy."
+}
