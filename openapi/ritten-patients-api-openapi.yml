@@ -1047,3 +1047,9 @@ components:
           example: e330e20b-b075-48c2-9432-c66a75c5d436
         isPrimary:
           type: boolean
+x-provenance:
+  method: harvested
+  publisher: Ritten
+  source: https://docs.ritten.io/swagger/openapi.yaml
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)

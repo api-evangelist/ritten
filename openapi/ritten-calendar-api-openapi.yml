@@ -192,3 +192,9 @@ components:
         id:
           type: string
           example: 182c2e54-3494-4b85-aba5-038cf539d5bf
+x-provenance:
+  method: harvested
+  publisher: Ritten
+  source: https://docs.ritten.io/swagger/openapi.yaml
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)

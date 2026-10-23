@@ -193,3 +193,9 @@ components:
           type: string
           format: date-time
           example: '2024-01-01T00:00:00Z'
+x-provenance:
+  method: harvested
+  publisher: Ritten
+  source: https://docs.ritten.io/swagger/openapi.yaml
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
