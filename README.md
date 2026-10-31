@@ -64,6 +64,138 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Ritten is a company surfaced as a portfolio company of 8vc, threshold-ventures and added to the API Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+Ritten is a cloud-based electronic medical record (EMR), CRM and revenue-cycle platform built specifically for behavioral health and substance-use treatment organizations - detox, residential, PHP/IOP, and outpatient providers. Its browser-based product covers clinical documentation (group and individual notes, AI-assisted charting), scheduling, revenue-cycle management (claims, billing, authorizations), a HIPAA-compliant patient portal, treatment planning, compliance tooling (audit trails, signature routing), and outcomes reporting. Ritten publishes a public REST contract for integrating partners - the Ritten External API - documented with an OpenAPI 3.1.0 definition covering 56 paths, 71 operations and 93 schemas across patients, contacts, CRM cases, programs, facilities, organizations, tasks, encounters, forms, insurance payers, users and a 17-operation insights and reporting family, plus six webhook events. Authentication is OAuth 2.0 client_credentials with a required X-Ritten-Tenant header selecting the clinic instance; credentials are provisioned by Ritten to partners rather than self-service. Ritten is built for HIPAA-regulated and 42 CFR Part 2 confidentiality requirements with role-based access controls and audit logs, and supports operational integrations for e-prescribing, labs, eligibility/billing clearinghouses, and telehealth. Backed by 8VC and Threshold Ventures; based in Philadelphia, PA.
 
-Backed by: 8vc, threshold-ventures — https://ritten.io
+**Areas:** Company · Behavioral Health · Electronic Health Records · Healthcare · Practice Management · HIPAA · Revenue Cycle Management · Clinical Documentation · Telehealth · OpenAPI · Webhook · Behavioral Health API
+
+## Ritten on APIs.io
+
+Everything profiled for Ritten is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/ritten/](https://apis.io/providers/ritten/)** — or go straight to one of the APIs or properties below.
+
+### APIs (15)
+
+- [Ritten Calendar API](https://apis.io/apis/ritten/ritten-calendar-api/) — The calendar API from Ritten — 2 operation(s) for calendar.
+- [Ritten Cases API](https://apis.io/apis/ritten/ritten-cases-api/) — Endpoints for accessing CRM cases (admissions pipeline).
+- [Ritten Contacts API](https://apis.io/apis/ritten/ritten-contacts-api/) — The contacts API from Ritten — 3 operation(s) for contacts.
+- [Ritten Encounters API](https://apis.io/apis/ritten/ritten-encounters-api/) — Endpoints for creating clinical encounters (visits) and discovering the encounter types they are created from.
+- [Ritten Facilities API](https://apis.io/apis/ritten/ritten-facilities-api/) — Endpoints for accessing clinic facilities (service locations).
+- [Ritten Forms API](https://apis.io/apis/ritten/ritten-forms-api/) — Endpoints for accessing form definitions and form-related data.
+- [Ritten Insights API](https://apis.io/apis/ritten/ritten-insights-api/) — Ritten provides insights and reporting endpoints for analytics and data export. These endpoints return various reports about admissions, discharges, census,…
+- [Ritten Insurance API](https://apis.io/apis/ritten/ritten-insurance-api/) — The insurance API from Ritten — 2 operation(s) for insurance.
+- [Ritten Organizations API](https://apis.io/apis/ritten/ritten-organizations-api/) — Endpoints for accessing CRM organizations and organization members. Requires CRM to be available for the target clinic (`X-Ritten-Tenant`). Integrations…
+- [Ritten Patients API](https://apis.io/apis/ritten/ritten-patients-api/) — The patients API from Ritten — 8 operation(s) for patients.
+- [Ritten Programs API](https://apis.io/apis/ritten/ritten-programs-api/) — Endpoints for creating, accessing, and managing clinic programs.
+- [Ritten Tasks API](https://apis.io/apis/ritten/ritten-tasks-api/) — Endpoints for accessing clinic tasks. Tasks linked to a client are only returned when the integration is authorized to read that client.
+- [Ritten Users API](https://apis.io/apis/ritten/ritten-users-api/) — The users API from Ritten — 6 operation(s) for users.
+- [Ritten Webhooks API](https://apis.io/apis/ritten/ritten-webhooks-api/) — Ritten provides webhooks for various events that occur in the system. Integrating partners can subscribe to these events to receive real-time updates.…
+- [Ritten OAUTH API](https://apis.io/apis/ritten/ritten-oauth-api/) — OAuth 2.0 token endpoint for obtaining access tokens. This is the recommended way to authenticate with the Ritten External API.
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Ritten Webhooks](https://apis.io/asyncapis/ritten/ritten-webhooks/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [ritten](https://apis.io/servers/ritten/ritten/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Ritten External Api Overlay](https://apis.io/overlays/ritten/ritten-external-api-overlay/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Ritten Authentication](https://apis.io/security/ritten/ritten-authentication/)
+- [Ritten Domain Security](https://apis.io/security/ritten/ritten-domain-security/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Ritten Plans Pricing](https://apis.io/plans/ritten/ritten-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Ritten Rate Limits](https://apis.io/rate-limits/ritten/ritten-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://ritten.io)
+- [Documentation](https://docs.ritten.io/)
+- [API reference](https://docs.ritten.io/)
+- [Support](https://www.ritten.io/support)
+- [Blog](https://www.ritten.io/blog)
+- [Compliance](https://www.ritten.io/)
+- [Terms of service](https://www.ritten.io/terms-of-service)
+- [Privacy policy](https://www.ritten.io/privacy-policy)
+- [GitHub](https://github.com/rittenlabs)
+
+## API Evangelist rating
+
+**Kin Score 50.0** — developing · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 73.2 |
+| Contract quality | 53.4 |
+| Contract governance | 18.2 |
+| Operational transparency | 42.1 |
+| Developer ergonomics | 54.2 |
+| Access clarity | 35.5 |
+
+**Agent readiness 31.8** — agent-ready
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | — |
+| Operation Distinctiveness | distinct |
+
+**Regulatory alignment 23.4** — Health
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/ritten/](https://apis.io/providers/ritten/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Ritten: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/ritten/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
